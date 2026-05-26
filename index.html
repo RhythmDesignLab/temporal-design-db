@@ -389,15 +389,14 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <script>
 // ── AIRTABLE CONFIG ──
-const AIRTABLE_TOKEN = 'patoGMBj355nAZ8RP.8fb10ad733e66954ee6a7b224e4a586a6eafbda54bdee5ed8fb594404e2f08be';
+const AIRTABLE_TOKEN = 'pat739NQb3xEaPePd.362a6f7c4fcc6b76307ab6db2abcb4d72e40a31cf9f4baf47472d8d164eb3c4c';
 const BASE_ID        = 'appchoJ2QZHRG1tm6';
 const TABLE_NAME     = 'database ENG'; // controlla il nome esatto in Airtable
 
 let DATA = [];
 
 async function loadFromAirtable() {
-  const loading = document.getElementById('loadingMsg');
-  if(loading) loading.style.display = 'flex';
+  // loading indicator (optional element)
   let records = [], offset = null;
   try {
     do {
@@ -412,11 +411,8 @@ async function loadFromAirtable() {
       offset     = json.offset || null;
     } while(offset);
   } catch(err) {
-    document.getElementById('loadingMsg').innerHTML =
-      `<p style="color:#b05c2a;font-family:IBM Plex Mono,monospace;font-size:12px">
-        Errore caricamento dati: ${err.message}<br>
-        Verifica token e nome tabella.
-      </p>`;
+    console.error('Airtable error:', err.message);
+    alert('Errore caricamento dati: ' + err.message + '\nVerifica token e nome tabella.');
     return;
   }
 
@@ -453,7 +449,7 @@ async function loadFromAirtable() {
     };
   });
 
-  if(loading) loading.style.display = 'none';
+
 
   // Init everything once data is loaded
   initFieldCounts();
