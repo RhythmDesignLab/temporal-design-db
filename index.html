@@ -427,6 +427,13 @@ async function loadFromAirtable() {
     // immagine: Airtable restituisce array di attachment
     const imgArr = f['Image'] || f['Immagine'] || f['image'] || null;
     const image  = imgArr && imgArr[0] ? imgArr[0].url : '';
+    // helper: extract URL whether field is string or Airtable URL object
+    const getUrl = v => {
+      if(!v) return '';
+      if(typeof v === 'string') return v;
+      if(typeof v === 'object' && v.url) return v.url;
+      return String(v);
+    };
     return {
       id:             String(f['Number']            || ''),
       name:           String(f['Case Name']         || ''),
@@ -444,10 +451,11 @@ async function loadFromAirtable() {
       tech:           String(f['Technological condition'] || '').trim(),
       interaction:    String(f['Interaction mode']  || ''),
       desc:           String(f['Case description']  || ''),
-      link:           String(f['Link']              || ''),
-      link2:          String(f['Link 2']            || ''),
-      link3:          String(f['Link 3']            || ''),
+      link:           getUrl(f['link']  || f['Link']  || ''),
+      link2:          getUrl(f['link2'] || f['Link 2']|| ''),
+      link3:          getUrl(f['link3'] || f['Link 3']|| ''),
       image:          image,
+      caption:        String(f['didascalia immagine'] || f['Didascalia immagine'] || ''),
     };
   });
 
