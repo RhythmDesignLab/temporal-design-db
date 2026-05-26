@@ -311,7 +311,7 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal-wrapper">
+  <div class="modal-wrapper" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModalDirect()" aria-label="Close">✕</button>
     <div class="modal-above">
       <div class="modal-id" id="mId"></div>
@@ -389,7 +389,7 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <script>
 // ── AIRTABLE CONFIG ──
-const AIRTABLE_TOKEN = 'pat739NQb3xEaPePd.362a6f7c4fcc6b76307ab6db2abcb4d72e40a31cf9f4baf47472d8d164eb3c4c';
+const AIRTABLE_TOKEN = 'patoGMBj355nAZ8RP.8fb10ad733e66954ee6a7b224e4a586a6eafbda54bdee5ed8fb594404e2f08be';
 const BASE_ID        = 'appchoJ2QZHRG1tm6';
 const TABLE_NAME     = 'database ENG'; // controlla il nome esatto in Airtable
 
@@ -400,8 +400,10 @@ async function loadFromAirtable() {
   let records = [], offset = null;
   try {
     do {
-      const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}`
+      const base = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}`
                   + (offset ? `?offset=${offset}` : '');
+      // Use corsproxy.io to bypass CORS restrictions on GitHub Pages
+      const url = `https://corsproxy.io/?${encodeURIComponent(base)}`;
       const res  = await fetch(url, {
         headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
       });
