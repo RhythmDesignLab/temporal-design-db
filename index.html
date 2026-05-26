@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temporal Design Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{
+  --bg:#fafaf8;--white:#ffffff;--surface:#f3f2ee;
+  --border:#e0ddd6;--border-strong:#c8c4ba;
+  --accent:#0000ff;--text:#1a1714;--muted:#7a7570;
+  --muted-light:#aaa69e;--nav-h:60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+::selection{background:#00f0ff;color:#000}
+::-moz-selection{background:#00f0ff;color:#000}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+
+/* NAV */
+.topnav{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:1px solid var(--border);height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;padding:0 32px;gap:24px}
+.nav-logo{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:400;color:var(--text);cursor:pointer;flex-shrink:0}
+.nav-logo span{color:var(--accent);font-style:italic}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1;justify-content:flex-end}
+.nav-links button,.mobile-menu button{background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:8px 14px;border-radius:2px;transition:color .15s,background .15s}
+.nav-links button:hover{background:var(--surface)}
+.nav-links button.active,.mobile-menu button.active{color:var(--text);font-weight:500}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:6px;flex-shrink:0}
+.hamburger span{display:block;width:22px;height:1.5px;background:var(--text);transition:all .25s;transform-origin:center}
+.hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.mobile-menu{display:none;position:fixed;top:var(--nav-h);left:0;right:0;background:var(--white);border-bottom:1px solid var(--border);z-index:199;flex-direction:column;padding:16px 32px 24px}
+.mobile-menu.open{display:flex}
+.mobile-menu button{text-align:left;border-bottom:1px solid var(--border);padding:12px 0}
+.mobile-menu button:last-child{border-bottom:none}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGES & SECTIONS */
+.page{display:none}.page.active{display:block}
+.inner{display:none}.inner.active{display:block}
+
+/* HERO */
+.hero{border-bottom:1px solid var(--border);padding:60px 32px 48px;max-width:960px;margin:0 auto}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.eyebrow::after{content:'';flex:1;height:1px;background:var(--border);max-width:120px}
+h1{font-family:'Libre Baskerville',serif;font-size:clamp(26px,4.5vw,50px);font-weight:400;line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:15px;font-weight:300;color:var(--muted);max-width:540px;line-height:1.7;margin-bottom:32px}
+.hero-stats{display:flex;gap:40px;flex-wrap:wrap}
+.stat-num{font-family:'Libre Baskerville',serif;font-size:28px;font-style:italic;color:var(--text);line-height:1;display:block}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted-light)}
+
+/* SUB-NAV */
+.sub-nav{display:flex;border-bottom:1px solid var(--border);padding:0 32px;background:var(--white);overflow-x:auto;scrollbar-width:none}
+.sub-nav::-webkit-scrollbar{display:none}
+.sub-nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:15px 18px 13px;transition:all .15s;margin-bottom:-1px;white-space:nowrap;flex-shrink:0}
+.sub-nav button:hover{color:var(--text)}
+.sub-nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.content{max-width:1400px;margin:0 auto;padding:32px 32px 80px}
+
+/* FILTER CHIPS */
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#e6e6ff;border:1px solid #b3b3ff;color:#0000cc;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 10px;border-radius:2px;cursor:pointer;transition:background .15s}
+.chip:hover{background:#b3b3ff}
+.chip-x{font-size:13px;line-height:1;color:var(--accent)}
+
+/* CONTROLS */
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-wrap input{width:100%;background:var(--white);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 12px 8px 32px;outline:none;border-radius:2px;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--muted-light)}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted-light);font-size:14px;pointer-events:none}
+select{background:var(--white);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 26px 8px 10px;cursor:pointer;outline:none;border-radius:2px;transition:border-color .15s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa69e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+select:focus{border-color:var(--accent)}
+.res-count{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-light);margin-left:auto;white-space:nowrap}
+
+/* TAGS (kept for cards + modal) */
+.tag{display:inline-block;border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;margin:1px 2px 1px 0;letter-spacing:.05em;border-radius:2px;white-space:nowrap;background:var(--surface);color:var(--muted)}
+.tag.clickable{cursor:pointer;transition:filter .12s,transform .12s}
+.tag.clickable:hover{filter:brightness(.85);transform:scale(1.05)}
+.tag.c-domain{background:#e6e6ff;border-color:#b3b3ff;color:#0000cc}
+.tag.c-focus{background:#f0f4f8;border-color:#c8d8e8;color:#3a5570}
+.tag.c-op{background:#f4f0f8;border-color:#d8c8e8;color:#5a3a70}
+.tag.c-orient{background:#f0f8f0;border-color:#c0d8c0;color:#3a6040}
+.tag.c-intent{background:#fdf8ec;border-color:#e8d8a0;color:#7a6010}
+.tag.c-tech{background:#f8f0f4;border-color:#e8c8d8;color:#703050}
+.tag.c-sense{background:#f0f8f8;border-color:#b8d8d8;color:#2a5858}
+.tag.c-interact{background:#f4f8f0;border-color:#c8d8b8;color:#3a5830}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.65);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:32px 20px;opacity:0;pointer-events:none;transition:opacity .28s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-wrapper{display:flex;flex-direction:column;align-items:center;gap:22px;position:relative;padding-top:8px;width:100%}
+.modal-close{position:fixed;top:18px;right:22px;background:rgba(255,255,255,.92);border:1px solid var(--border);cursor:pointer;font-size:15px;color:var(--muted);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:600;border-radius:50%;transition:color .15s,background .15s;line-height:1}
+.modal-close:hover{color:var(--text);background:#fff}
+.modal-above{text-align:center;color:#fff}
+.modal-id{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:clamp(18px,3vw,26px);font-weight:400;color:#fff;margin-bottom:4px;line-height:1.2}
+.modal-author{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px}
+.modal-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.modal-link{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:2px;transition:background .15s,border-color .15s;text-transform:uppercase}
+.modal-link:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.6)}
+.modal-circle{width:min(500px,82vw);height:min(500px,82vw);border-radius:50%;border:1.5px solid rgba(255,255,255,.7);position:relative;overflow:visible;background:var(--white);flex-shrink:0;box-shadow:0 12px 60px rgba(0,0,0,.25)}
+.modal-circle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:140%;height:140%}
+.modal-desc-wrap{max-width:460px;width:100%}
+.modal-desc{font-size:13px;font-weight:300;line-height:1.75;color:rgba(255,255,255,.85);padding:14px 18px;border:1px solid rgba(255,255,255,.2);border-left:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.08)}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:2px;transition:box-shadow .2s,border-color .2s;animation:fadeUp .3s ease both;display:flex;flex-direction:column;cursor:pointer;overflow:hidden}
+.card:hover{border-color:var(--accent);box-shadow:0 4px 20px rgba(0,0,255,.08)}
+.card-img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:center;display:block;background:var(--surface);border-bottom:1px solid var(--border)}
+.card-img-placeholder{width:100%;aspect-ratio:4/3;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.card-img-placeholder span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-light)}
+.card-body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
+.card:hover{border-color:var(--accent);box-shadow:0 4px 20px rgba(0,0,255,.08)}
+.card-id{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--accent);margin-bottom:8px;text-transform:uppercase}
+.card-title{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:400;line-height:1.25;margin-bottom:4px}
+.card-title a{color:var(--text);text-decoration:none;transition:color .15s}
+.card-title a:hover{color:var(--accent)}
+.card-author{font-size:11px;color:var(--muted);margin-bottom:10px}
+.card-meta{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+.card-meta strong{color:var(--text);font-weight:500}
+.card-desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.5;flex:1}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.card-links{display:flex;gap:8px;flex-wrap:wrap}
+.card-link{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--accent);text-decoration:none;border:1px solid #b3b3ff;padding:3px 8px;border-radius:2px;transition:background .15s}
+.card-link:hover{background:#e6e6ff}
+
+/* VIZ */
+.viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.viz-full{grid-column:1/-1}
+.chart-card{background:var(--white);border:1px solid var(--border);border-radius:2px;padding:22px}
+.chart-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.chart-wrap{position:relative;height:200px}
+.chart-wrap.h260{height:260px}
+.chart-wrap.h340{height:340px}
+.chart-wrap.h420{height:420px}
+
+/* SANKEY / ALLUVIAL */
+.sankey-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:2px}
+.sankey-controls label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.sankey-controls select{min-width:160px}
+.sankey-btn{background:var(--accent);color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border-radius:2px;cursor:pointer;transition:opacity .15s}
+.sankey-btn:hover{opacity:.85}
+#sankeyContainer{width:100%;overflow-x:auto}
+#sankeyContainer svg{display:block;max-width:100%}
+.sankey-tooltip{position:fixed;background:var(--text);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:6px 10px;border-radius:2px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:999;max-width:200px;line-height:1.5}
+
+/* ABOUT */
+.about-wrap{max-width:720px;margin:0 auto;padding:60px 32px 100px}
+.about-wrap h2{font-family:'Libre Baskerville',serif;font-size:clamp(22px,3.5vw,34px);font-weight:400;line-height:1.2;letter-spacing:-.02em;margin-bottom:30px}
+.about-wrap h2 em{font-style:italic;color:var(--accent)}
+.about-wrap h3{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:36px 0 14px;padding-top:28px;border-top:1px solid var(--border)}
+.about-wrap p{font-size:15px;font-weight:300;line-height:1.8;color:var(--text);margin-bottom:16px}
+.about-wrap ul{list-style:none;margin-bottom:18px}
+.about-wrap ul li{font-size:13px;font-weight:300;color:var(--text);padding:7px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.about-wrap ul li span{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted-light);white-space:nowrap}
+.divider{height:1px;background:var(--border);margin:40px 0}
+code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);padding:2px 6px;border-radius:2px}
+.curators{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:8px}
+.cur-card{border:1px solid var(--border);padding:20px;border-radius:2px;background:var(--white)}
+.cur-name{font-family:'Libre Baskerville',serif;font-size:16px;margin-bottom:4px}
+.cur-role{font-size:12px;color:var(--muted);margin-bottom:14px;font-style:italic;line-height:1.5}
+.cur-links{display:flex;gap:8px;flex-wrap:wrap}
+.cur-link{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid #b3b3ff;padding:4px 10px;border-radius:2px;transition:background .15s,color .15s}
+.cur-link:hover{background:var(--accent);color:#fff}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:var(--white)}
+footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-light);letter-spacing:.05em}
+
+/* ANIMATION */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .topnav,.content,.hero,.about-wrap{padding-left:20px;padding-right:20px}
+  .sub-nav{padding:0 20px}
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .hero-stats{gap:24px}
+  .controls{flex-direction:column;align-items:stretch}
+  .res-count{margin-left:0}
+  select{width:100%}
+  .viz-grid{grid-template-columns:1fr}
+  .viz-full{grid-column:1}
+  .curators{grid-template-columns:1fr}
+  footer{flex-direction:column;align-items:flex-start}
+  .sankey-controls{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){
+  .topnav,.content,.hero,.about-wrap{padding-left:14px;padding-right:14px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="nav-logo" onclick="goPage('db')">Temporal <span>Design</span> DB</span>
+  <div class="nav-links" id="navLinks">
+    <button class="active" onclick="goPage('db',this)">Database</button>
+    <button onclick="goPage('about',this)">About</button>
+  </div>
+  <button class="hamburger" id="hbBtn" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <button class="active" onclick="goPage('db',this);closeMenu()">Database</button>
+  <button onclick="goPage('about',this);closeMenu()">About</button>
+</div>
+
+<!-- ══ DATABASE PAGE ══ -->
+<div class="page active" id="page-db">
+  <div class="hero">
+    <p class="eyebrow">Research Database</p>
+    <h1>Temporal <em>Artifacts</em><br>&amp; Design Cases</h1>
+    <p class="hero-sub">A curated collection of objects, interfaces, and systems that represent, manipulate, or communicate the experience of time.</p>
+    <div class="hero-stats">
+      <div><span class="stat-num" id="totalCount">126</span><span class="stat-label">Case Studies</span></div>
+      <div><span class="stat-num">2400+</span><span class="stat-label">Years Covered</span></div>
+      <div><span class="stat-num" id="domainCount">—</span><span class="stat-label">Domains</span></div>
+    </div>
+  </div>
+
+  <div class="sub-nav">
+    <button class="active" onclick="switchInner('cards',this)">Case Studies</button>
+    <button onclick="switchInner('viz',this)">Data Viz</button>
+    <button onclick="switchInner('alluvial',this)">Alluvial</button>
+  </div>
+
+  <div class="content">
+
+    <!-- CARDS -->
+    <div class="inner active" id="inner-cards">
+      <div id="chips-cards" class="filter-chips"></div>
+      <div class="controls">
+        <div class="search-wrap"><span class="si">⌕</span><input type="text" id="cardSearch" placeholder="Search name, author, description…" oninput="applyAll()"></div>
+        <select id="f-domain" onchange="syncFromSelect('domain','f-domain');applyAll()"><option value="">All Domains</option></select>
+        <select id="f-focus" onchange="syncFromSelect('temporalFocus','f-focus');applyAll()"><option value="">All Temporal Focus</option></select>
+        <select id="f-op" onchange="syncFromSelect('operation','f-op');applyAll()"><option value="">All Operations</option></select>
+        <select id="f-orient" onchange="syncFromSelect('orientation','f-orient');applyAll()"><option value="">All Orientations</option></select>
+        <select id="f-intent" onchange="syncFromSelect('intent','f-intent');applyAll()"><option value="">All Intents</option></select>
+        <select id="f-tech" onchange="syncFromSelect('tech','f-tech');applyAll()"><option value="">All Technologies</option></select>
+        <select id="f-sense" onchange="syncFromSelect('sense','f-sense');applyAll()"><option value="">All Senses</option></select>
+        <select id="f-interact" onchange="syncFromSelect('interaction','f-interact');applyAll()"><option value="">All Interactions</option></select>
+        <span class="res-count" id="caseCount"></span>
+      </div>
+      <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <!-- VIZ -->
+    <div class="inner" id="inner-viz">
+      <div class="viz-grid">
+        <div class="chart-card"><div class="chart-title">Artifact Domain</div><div class="chart-wrap h260"><canvas id="cDomain"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Interaction Mode</div><div class="chart-wrap h260"><canvas id="cInteract"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Technological Condition</div><div class="chart-wrap"><canvas id="cTech"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Sensory Modality</div><div class="chart-wrap"><canvas id="cSense"></canvas></div></div>
+        <div class="chart-card viz-full"><div class="chart-title">Temporal Focus</div><div class="chart-wrap"><canvas id="cFocus"></canvas></div></div>
+        <div class="chart-card viz-full"><div class="chart-title">Temporal Operation</div><div class="chart-wrap"><canvas id="cOp"></canvas></div></div>
+        <div class="chart-card viz-full"><div class="chart-title">Temporal Orientation</div><div class="chart-wrap h260"><canvas id="cOrient"></canvas></div></div>
+        <div class="chart-card viz-full"><div class="chart-title">Design Intent</div><div class="chart-wrap"><canvas id="cIntent"></canvas></div></div>
+        <div class="chart-card viz-full"><div class="chart-title">Cases per Decade</div><div class="chart-wrap h260"><canvas id="cDecade"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ALLUVIAL -->
+    <div class="inner" id="inner-alluvial">
+      <div class="sankey-controls">
+        <div>
+          <label>From</label>
+          <select id="sankeyFrom">
+            <option value="domain">Artifact Domain</option>
+            <option value="temporalFocus">Temporal Focus</option>
+            <option value="operation">Temporal Operation</option>
+            <option value="orientation">Temporal Orientation</option>
+            <option value="intent">Design Intent</option>
+            <option value="tech">Technology</option>
+            <option value="sense">Sensory Modality</option>
+            <option value="interaction">Interaction Mode</option>
+          </select>
+        </div>
+        <div>
+          <label>To</label>
+          <select id="sankeyTo">
+            <option value="interaction">Interaction Mode</option>
+            <option value="tech">Technology</option>
+            <option value="temporalFocus">Temporal Focus</option>
+            <option value="operation">Temporal Operation</option>
+            <option value="orientation">Temporal Orientation</option>
+            <option value="intent">Design Intent</option>
+            <option value="sense">Sensory Modality</option>
+            <option value="domain">Artifact Domain</option>
+          </select>
+        </div>
+        <button class="sankey-btn" onclick="buildAlluvial()">Update diagram</button>
+      </div>
+      <div id="sankeyContainer"></div>
+      <div class="sankey-tooltip" id="sankeyTip"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal-wrapper">
+    <button class="modal-close" onclick="closeModalDirect()" aria-label="Close">✕</button>
+    <div class="modal-above">
+      <div class="modal-id" id="mId"></div>
+      <div class="modal-title" id="mTitle"></div>
+      <div class="modal-author" id="mAuthor"></div>
+      <div class="modal-links" id="mLinks"></div>
+    </div>
+    <div class="modal-circle">
+      <div id="mRadial"></div>
+    </div>
+    <div class="modal-desc-wrap">
+      <div class="modal-desc" id="mDesc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ABOUT PAGE ══ -->
+<div class="page" id="page-about">
+  <div class="about-wrap">
+    <p class="eyebrow">About this project</p>
+    <h2>Mapping <em>time</em><br>through design</h2>
+    <p>This database collects and organizes design artifacts — objects, interfaces, systems, and images — that engage with the representation, manipulation, or experience of <em>time</em>. Cases span over two millennia, from ancient Greece to contemporary smart wearables.</p>
+    <p>Each entry is catalogued across multiple analytical dimensions: the domain and type of the artifact, its technological condition, the sensory modality it addresses, and the specific temporal operations it performs.</p>
+
+    <h3>Curators</h3>
+    <div class="curators">
+      <div class="cur-card">
+        <div class="cur-name">Silvia Gasparotto</div>
+        <div class="cur-role">Associate Professor in Design<br>Università di Bologna</div>
+        <div class="cur-links">
+          <a class="cur-link" href="https://www.unibo.it/sitoweb/silvia.gasparotto" target="_blank" rel="noopener">UniBo Profile</a>
+          <a class="cur-link" href="https://www.linkedin.com/in/silvia-gasparotto-3a580640/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </div>
+      <div class="cur-card">
+        <div class="cur-name">Giorgio Dall'Osso</div>
+        <div class="cur-role">Researcher in Design<br>Università degli Studi della Repubblica di San Marino</div>
+        <div class="cur-links">
+          <a class="cur-link" href="https://design.unirsm.sm/people/giorgio-dallosso/" target="_blank" rel="noopener">UniRSM Profile</a>
+          <a class="cur-link" href="https://www.linkedin.com/in/giorgio-dallosso/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3>Data Fields</h3>
+    <ul>
+      <li>Case Name <span>Title of the artifact or system</span></li>
+      <li>Author / Producer <span>Designer, firm, or institution</span></li>
+      <li>Date <span>Year of creation or publication</span></li>
+      <li>Artifact Domain <span>Object, image, 2D/3D digital interface…</span></li>
+      <li>Artifact Type <span>Calendar, wristwatch, game, platform…</span></li>
+      <li>Temporal Focus <span>Category of temporal operation</span></li>
+      <li>Temporal Operation <span>Signaling, organizing, repeating…</span></li>
+      <li>Representation of Time <span>How time is shown or encoded</span></li>
+      <li>Temporal Orientation <span>Past, present, future or combinations</span></li>
+      <li>Design Intent <span>Awareness, optimization, estimation…</span></li>
+      <li>Design Solution <span>The design approach adopted</span></li>
+      <li>Sensory Modality <span>Vision, touch, sound…</span></li>
+      <li>Technological Condition <span>Analog or digital</span></li>
+      <li>Interaction Mode <span>Static, dynamic, interactive</span></li>
+    </ul>
+    <h3>How to use</h3>
+    <p><strong>Table</strong> shows all fields, is sortable by column, and supports multi-filter. <strong>Case Studies</strong> gives a visual overview. <strong>Data Viz</strong> shows distributions across all categorical dimensions. <strong>Alluvial</strong> lets you explore relational flows between any two dimensions.</p>
+    <p>Click any tag in Table or Cards to filter by that value. Case titles link to their original source.</p>
+    <h3>Technical notes</h3>
+    <p>Single-file static HTML — no server or database required. Data is embedded in the JavaScript <code>DATA</code> array. Charts use Chart.js; the alluvial diagram uses D3.js.</p>
+  </div>
+</div>
+
+<footer>
+  <p>Temporal Design Database · 126 case studies</p>
+  <p>HTML · CSS · Chart.js · D3.js</p>
+</footer>
+
+<script>
+// ── AIRTABLE CONFIG ──
+const AIRTABLE_TOKEN = 'pat8jPX7EP5UKF9Di.1ecc432dc2178d8c4337a77ee79c0ecbb32df974e238f3b3c3f1f7d858a07a38';
+const BASE_ID        = 'appchoJ2QZHRG1tm6';
+const TABLE_NAME     = 'database provone.xlsx'; // controlla il nome esatto in Airtable
+
+let DATA = [];
+
+async function loadFromAirtable() {
+  const loading = document.getElementById('loadingMsg');
+  if(loading) loading.style.display = 'flex';
+  let records = [], offset = null;
+  try {
+    do {
+      const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}`
+                  + (offset ? `?offset=${offset}` : '');
+      const res  = await fetch(url, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+      });
+      if(!res.ok) throw new Error(`Airtable error: ${res.status} ${res.statusText}`);
+      const json = await res.json();
+      records    = records.concat(json.records);
+      offset     = json.offset || null;
+    } while(offset);
+  } catch(err) {
+    document.getElementById('loadingMsg').innerHTML =
+      `<p style="color:#b05c2a;font-family:IBM Plex Mono,monospace;font-size:12px">
+        Errore caricamento dati: ${err.message}<br>
+        Verifica token e nome tabella.
+      </p>`;
+    return;
+  }
+
+  DATA = records.map(r => {
+    const f = r.fields;
+    // gestione anno: può essere numero, stringa o mancante
+    let year = f['Date'] || '';
+    const parsed = parseInt(year);
+    if(!isNaN(parsed)) year = parsed;
+    // immagine: Airtable restituisce array di attachment
+    const imgArr = f['Image'] || f['Immagine'] || f['image'] || null;
+    const image  = imgArr && imgArr[0] ? imgArr[0].url : '';
+    return {
+      id:             String(f['Number']            || ''),
+      name:           String(f['Case Name']         || ''),
+      author:         String(f['Author/Producer']   || ''),
+      year:           year,
+      domain:         String(f['Artifact Domain']   || ''),
+      type:           String(f['Artifact Type']     || ''),
+      temporalFocus:  String(f['Temporal focus']    || ''),
+      operation:      String(f['Temporal operation']|| ''),
+      representation: String(f['Representation of Time'] || ''),
+      orientation:    String(f['Temporal orientation']   || ''),
+      intent:         String(f['Design intent']     || f['Design intent '] || ''),
+      solution:       String(f['Design solution']   || ''),
+      sense:          String(f['Sensory modality']  || ''),
+      tech:           String(f['Technological condition'] || '').trim(),
+      interaction:    String(f['Interaction mode']  || ''),
+      desc:           String(f['Case description']  || ''),
+      link:           String(f['Link']              || ''),
+      link2:          String(f['Link 2']            || ''),
+      link3:          String(f['Link 3']            || ''),
+      image:          image,
+    };
+  });
+
+  if(loading) loading.style.display = 'none';
+
+  // Init everything once data is loaded
+  initFieldCounts();
+  populateSelects();
+  applyAll();
+  buildDecadeChart();
+  document.getElementById('domainCount').textContent = new Set(DATA.map(d=>d.domain)).size;
+  document.getElementById('totalCount').textContent  = DATA.length;
+}
+
+
+
+// ── STATE ──
+let sortCol=-1, sortDir=1, filteredData=[...DATA], chartsBuilt=false;
+const AF={domain:'',temporalFocus:'',operation:'',orientation:'',intent:'',tech:'',sense:'',interaction:''};
+const SELECT_MAP={domain:'f-domain',temporalFocus:'f-focus',operation:'f-op',orientation:'f-orient',intent:'f-intent',tech:'f-tech',sense:'f-sense',interaction:'f-interact'};
+const FIELD_LABEL={domain:'Domain',temporalFocus:'Temporal Focus',operation:'Operation',orientation:'Orientation',intent:'Intent',tech:'Technology',sense:'Sensory Modality',interaction:'Interaction'};
+const PALETTES={
+  domain:'#0000ff',temporalFocus:'#3a5570',operation:'#5a3a70',orientation:'#3a6040',
+  intent:'#7a6010',tech:'#703050',sense:'#2a5858',interaction:'#3a5830'
+};
+
+// ── ROUTING ──
+function goPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const txt=btn?btn.textContent:'Database';
+  document.querySelectorAll('#navLinks button,#mobileMenu button').forEach(b=>b.classList.toggle('active',b.textContent===txt));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleMenu(){document.getElementById('hbBtn').classList.toggle('open');document.getElementById('mobileMenu').classList.toggle('open');}
+function closeMenu(){document.getElementById('hbBtn').classList.remove('open');document.getElementById('mobileMenu').classList.remove('open');}
+function switchInner(id,btn){
+  document.querySelectorAll('.inner').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sub-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('inner-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(!chartsBuilt&&id==='viz'){buildCharts();chartsBuilt=true;}
+  if(id==='alluvial')buildAlluvial();
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', ()=>{ loadFromAirtable(); });
+
+function populateSelects(){
+  const fields=[['f-domain','domain'],['f-focus','temporalFocus'],['f-op','operation'],
+    ['f-orient','orientation'],['f-intent','intent'],['f-tech','tech'],['f-sense','sense'],['f-interact','interaction']];
+  fields.forEach(([id,key])=>{
+    const vals=[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort();
+    const sel=document.getElementById(id);
+    vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+  });
+}
+
+// ── TAG CLICK ──
+function tagClick(field,value){
+  AF[field]=AF[field]===value?'':value;
+  const selId=SELECT_MAP[field];
+  if(selId)document.getElementById(selId).value=AF[field];
+  applyAll();
+}
+function syncFromSelect(field,selId){
+  AF[field]=document.getElementById(selId).value;
+}
+function removeFilter(field){
+  AF[field]='';
+  const selId=SELECT_MAP[field];
+  if(selId)document.getElementById(selId).value='';
+  applyAll();
+}
+
+// ── CORE FILTER ──
+function applyAll(){
+  const q=(document.getElementById('cardSearch').value||'').toLowerCase();
+  filteredData=DATA.filter(d=>{
+    const txt=[d.id,d.name,d.author,d.desc,d.type,d.representation,d.solution].join(' ').toLowerCase();
+    return(!q||txt.includes(q))
+      &&Object.entries(AF).every(([k,v])=>!v||d[k]===v);
+  });
+  renderChips();
+  renderCards(filteredData);
+}
+
+// ── CHIPS ──
+function renderChips(){
+  const html=Object.entries(AF).filter(([k,v])=>v)
+    .map(([k,v])=>`<span class="chip" onclick="removeFilter('${k}')"><span>${FIELD_LABEL[k]}: <strong>${v}</strong></span><span class="chip-x">✕</span></span>`)
+    .join('');
+  document.querySelectorAll('.filter-chips').forEach(el=>el.innerHTML=html);
+}
+
+// ── ESC ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ── CARDS ──
+function renderCards(data){
+  const grid=document.getElementById('cardsGrid');
+  grid.innerHTML='';
+  document.getElementById('caseCount').textContent=data.length+' / '+DATA.length;
+  if(!data.length){grid.innerHTML='<p style="text-align:center;padding:48px;color:var(--muted-light);font-style:italic">No results.</p>';return;}
+  data.forEach((d,i)=>{
+    const c=document.createElement('div');
+    c.className='card';
+    c.style.animationDelay=(i*15)+'ms';
+    c.style.cursor='pointer';
+    const imgHtml = d.image
+      ? `<img class="card-img" src="${d.image}" alt="${esc(d.name)}" loading="lazy">`
+      : `<div class="card-img-placeholder"><span>No image</span></div>`;
+    c.innerHTML=`
+      ${imgHtml}
+      <div class="card-body">
+        <div class="card-id">${esc(d.id)} · ${esc(String(d.year))}</div>
+        <div class="card-title" style="margin-bottom:4px">${esc(d.name)}</div>
+        <div class="card-author">${esc(d.author)}</div>
+        <div class="card-desc">${esc(d.desc)}</div>
+        <div class="card-tags">
+          <span class="tag c-domain clickable" onclick="event.stopPropagation();tagClick('domain','${esc(d.domain)}')">${esc(d.domain)}</span>
+          <span class="tag c-focus clickable" onclick="event.stopPropagation();tagClick('temporalFocus','${esc(d.temporalFocus)}')">${esc(d.temporalFocus)}</span>
+          <span class="tag c-tech clickable" onclick="event.stopPropagation();tagClick('tech','${esc(d.tech)}')">${esc(d.tech)}</span>
+          <span class="tag c-interact clickable" onclick="event.stopPropagation();tagClick('interaction','${esc(d.interaction)}')">${esc(d.interaction)}</span>
+          <span class="tag c-sense clickable" onclick="event.stopPropagation();tagClick('sense','${esc(d.sense)}')">${esc(d.sense)}</span>
+          <span class="tag c-intent clickable" onclick="event.stopPropagation();tagClick('intent','${esc(d.intent)}')">${esc(d.intent)}</span>
+        </div>
+      </div>`;
+    c.addEventListener('click',()=>openModal(d));
+    grid.appendChild(c);
+  });
+}
+
+// ── FIELD COUNTS (precomputed) ──
+const fieldCounts={};
+function initFieldCounts(){
+  const keys=['domain','temporalFocus','operation','orientation','intent','tech','sense','interaction'];
+  keys.forEach(key=>{
+    fieldCounts[key]={};
+    DATA.forEach(d=>{if(d[key])fieldCounts[key][d[key]]=(fieldCounts[key][d[key]]||0)+1;});
+  });
+}
+
+// ── MODAL ──
+function openModal(d){
+  document.getElementById('mId').textContent=d.id+' · '+d.year;
+  document.getElementById('mTitle').textContent=d.name;
+  document.getElementById('mAuthor').textContent=d.author;
+  document.getElementById('mDesc').textContent=d.desc||'—';
+  const links=[[d.link,'Source'],[d.link2,'Link 2'],[d.link3,'Link 3']]
+    .filter(([u])=>u)
+    .map(([u,lbl])=>`<a class="modal-link" href="${u}" target="_blank" rel="noopener">${lbl}</a>`)
+    .join('');
+  document.getElementById('mLinks').innerHTML=links;
+  document.getElementById('mRadial').innerHTML=buildRadialSVG(d);
+  // wire up clickable terminal dots → close modal + apply filter
+  document.querySelectorAll('#mRadial .terminal-dot').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const field=el.dataset.field, val=el.dataset.val;
+      if(field&&val){ closeModalDirect(); tagClick(field,val); }
+    });
+  });
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function buildRadialSVG(d){
+  const W=700, H=700;
+  const cx=350, cy=350;
+  const imgR=105;
+  const lineLen=128;
+
+  const fields=[
+    {key:'domain',        label:'Domain'},
+    {key:'temporalFocus', label:'Temporal Focus'},
+    {key:'operation',     label:'Operation'},
+    {key:'orientation',   label:'Orientation'},
+    {key:'intent',        label:'Design Intent'},
+    {key:'tech',          label:'Technology'},
+    {key:'sense',         label:'Sensory Modality'},
+    {key:'interaction',   label:'Interaction'},
+  ];
+
+  const parts=[];
+  parts.push(`<defs><clipPath id="imgClip"><circle cx="${cx}" cy="${cy}" r="${imgR}"/></clipPath></defs>`);
+
+  fields.forEach((f,i)=>{
+    const angleDeg=-135+i*45;
+    const a=angleDeg*Math.PI/180;
+    const cosA=Math.cos(a), sinA=Math.sin(a);
+    const val=d[f.key]||'';
+    const counts=fieldCounts[f.key]||{};
+    const count=val?(counts[val]||0):0;
+    const maxCount=Object.values(counts).length?Math.max(...Object.values(counts)):1;
+
+    // terminal radius 9–28 px proportional to frequency
+    const tR=val?Math.max(9,Math.round(9+(count/maxCount)*19)):9;
+
+    // line start / end
+    const lx1=(cx+(imgR+5)*cosA).toFixed(1);
+    const ly1=(cy+(imgR+5)*sinA).toFixed(1);
+    const tx= cx+(imgR+lineLen+tR)*cosA;
+    const ty= cy+(imgR+lineLen+tR)*sinA;
+    const lx2=(tx-(tR+2)*cosA).toFixed(1);
+    const ly2=(ty-(tR+2)*sinA).toFixed(1);
+
+    parts.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="#c8c4ba" stroke-width="1"/>`);
+
+    // ── LABELS along the line ──
+    // Midpoint of spoke (55% toward terminal so labels sit closer to terminal side)
+    const mx=(cx+(imgR+lineLen*0.52)*cosA).toFixed(1);
+    const my=(cy+(imgR+lineLen*0.52)*sinA).toFixed(1);
+
+    // Flip text for left-half spokes so it stays readable
+    const flip=cosA<-0.01;
+    const rot=(angleDeg+(flip?180:0)).toFixed(1);
+
+    const dispVal=val?(val.length>20?val.slice(0,18)+'\u2026':val):'—';
+
+    // group: translate to midpoint, rotate, then dy offsets place text above the line
+    // dy works in rotated space: dy=-N moves text N units "above" the rotated baseline
+    parts.push(`<g transform="translate(${mx},${my}) rotate(${rot})">
+      <text dy="-17" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="#aaa69e" letter-spacing="0.09em">${f.label.toUpperCase()}</text>
+      <text dy="-4"  text-anchor="middle" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1a1714" font-weight="400">${dispVal}</text>
+    </g>`);
+
+    // ── TERMINAL CIRCLE (clickable) ──
+    const col=val?'#0000ff':'#e0ddd6';
+    const dataAttrs=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer"`:'';
+    parts.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${col}" fill-opacity="${val?0.1:0.08}" stroke="${col}" stroke-width="1.5" ${dataAttrs}/>`);
+
+    // count inside terminal when large enough (not clickable separately, circle handles it)
+    if(tR>=12&&val){
+      parts.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="9" font-family="IBM Plex Mono,monospace" fill="${col}" style="pointer-events:none">${count}</text>`);
+    }
+  });
+
+  // center image or placeholder
+  if(d.image){
+    parts.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);
+  } else {
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="#f3f2ee"/>`);
+    parts.push(`<line x1="${cx-35}" y1="${cy-35}" x2="${cx+35}" y2="${cy+35}" stroke="#c8c4ba" stroke-width="1.5"/>`);
+    parts.push(`<line x1="${cx+35}" y1="${cy-35}" x2="${cx-35}" y2="${cy+35}" stroke="#c8c4ba" stroke-width="1.5"/>`);
+  }
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="#1a1714" stroke-width="1.5"/>`);
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;margin:0 auto;max-width:100%">${parts.join('')}</svg>`;
+}
+
+function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
+function closeModalDirect(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect();});
+
+// ── CHARTS ──
+Chart.defaults.color='#7a7570';Chart.defaults.borderColor='#e0ddd6';
+Chart.defaults.font.family="'IBM Plex Mono',monospace";Chart.defaults.font.size=10;
+const PAL=['#0000ff','#1a4a6a','#3a6a3a','#6a3a6a','#6a5c1a','#2a5a5a','#8a3a2a','#3a3a6a','#2a6a4a','#6a2a4a','#4a6a1a','#1a6a6a','#6a4a1a','#1a6a2a'];
+function countBy(key){const m={};DATA.forEach(d=>{if(d[key])m[d[key]]=(m[d[key]]||0)+1;});return m;}
+function mkBar(id,counts,h=false,ht='h200'){
+  const s=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  new Chart(document.getElementById(id),{type:'bar',
+    data:{labels:s.map(e=>e[0]),datasets:[{data:s.map(e=>e[1]),backgroundColor:PAL,borderWidth:0,borderRadius:3}]},
+    options:{indexAxis:h?'y':'x',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#f0ede6'},ticks:{color:'#7a7570',maxRotation:35}},y:{grid:{color:'#f0ede6'},ticks:{color:'#7a7570'}}}}});
+}
+function mkDoughnut(id,counts){
+  new Chart(document.getElementById(id),{type:'doughnut',
+    data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:PAL,borderWidth:2,borderColor:'#ffffff'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{color:'#7a7570',boxWidth:11,padding:10,font:{size:10}}}}}});
+}
+function buildCharts(){
+  mkDoughnut('cDomain',countBy('domain'));
+  mkDoughnut('cInteract',countBy('interaction'));
+  mkBar('cTech',countBy('tech'));
+  mkBar('cSense',countBy('sense'));
+  mkBar('cFocus',countBy('temporalFocus'),true);
+  mkBar('cOp',countBy('operation'));
+  mkBar('cOrient',countBy('orientation'),true);
+  mkBar('cIntent',countBy('intent'),true);
+}
+function buildDecadeChart(){
+  const withYear=DATA.filter(d=>typeof d.year==='number');
+  const decMap={};
+  withYear.forEach(d=>{const l=Math.floor(d.year/10)*10+'s';decMap[l]=(decMap[l]||0)+1;});
+  const dec=Object.entries(decMap).sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+  new Chart(document.getElementById('cDecade'),{type:'bar',
+    data:{labels:dec.map(e=>e[0]),datasets:[{data:dec.map(e=>e[1]),backgroundColor:'#0000ff55',borderColor:'#0000ff',borderWidth:1.5,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#f0ede6'},ticks:{color:'#7a7570'}},y:{grid:{color:'#f0ede6'},ticks:{color:'#7a7570',stepSize:1}}}}});
+}
+
+// ── ALLUVIAL / SANKEY (D3) ──
+function buildAlluvial(){
+  const fromKey=document.getElementById('sankeyFrom').value;
+  const toKey=document.getElementById('sankeyTo').value;
+  if(fromKey===toKey){alert('Please select two different dimensions.');return;}
+
+  // Build flows
+  const flows={};
+  DATA.forEach(d=>{
+    const a=d[fromKey],b=d[toKey];
+    if(!a||!b)return;
+    const k=a+'|||'+b;
+    flows[k]=(flows[k]||0)+1;
+  });
+
+  const container=document.getElementById('sankeyContainer');
+  container.innerHTML='';
+
+  const W=Math.min(container.clientWidth||900,1200),H=520;
+  const margin={top:20,right:200,bottom:20,left:200};
+  const innerW=W-margin.left-margin.right;
+  const innerH=H-margin.top-margin.bottom;
+
+  // Collect nodes
+  const leftVals=[...new Set(DATA.map(d=>d[fromKey]).filter(Boolean))].sort();
+  const rightVals=[...new Set(DATA.map(d=>d[toKey]).filter(Boolean))].sort();
+
+  // Count totals
+  const leftTotals={},rightTotals={};
+  Object.entries(flows).forEach(([k,v])=>{
+    const [a,b]=k.split('|||');
+    leftTotals[a]=(leftTotals[a]||0)+v;
+    rightTotals[b]=(rightTotals[b]||0)+v;
+  });
+
+  const total=Object.values(leftTotals).reduce((a,b)=>a+b,0);
+  const gap=8;
+
+  // Layout left nodes
+  const leftH=innerH-(leftVals.length-1)*gap;
+  const leftNodes={};let ly=0;
+  leftVals.forEach(v=>{
+    const h=Math.max(4,(leftTotals[v]/total)*leftH);
+    leftNodes[v]={y:ly,h};
+    ly+=h+gap;
+  });
+
+  // Layout right nodes
+  const rightH=innerH-(rightVals.length-1)*gap;
+  const rightNodes={};let ry=0;
+  rightVals.forEach(v=>{
+    const h=Math.max(4,(rightTotals[v]/total)*rightH);
+    rightNodes[v]={y:ry,h};
+    ry+=h+gap;
+  });
+
+  // Track offsets for ribbons
+  const leftOff={},rightOff={};
+  leftVals.forEach(v=>leftOff[v]=0);
+  rightVals.forEach(v=>rightOff[v]=0);
+
+  const svg=d3.select(container).append('svg')
+    .attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`)
+    .style('overflow','visible');
+
+  const g=svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const colorScale=d3.scaleOrdinal(d3.schemeTableau10);
+  const tip=document.getElementById('sankeyTip');
+
+  // Draw ribbons
+  Object.entries(flows).forEach(([k,v])=>{
+    const [a,b]=k.split('|||');
+    const lNode=leftNodes[a],rNode=rightNodes[b];
+    const lh=(v/total)*leftH;
+    const rh=(v/total)*rightH;
+    const y0=lNode.y+leftOff[a];
+    const y1=rNode.y+rightOff[b];
+    leftOff[a]+=lh;
+    rightOff[b]+=rh;
+
+    const x0=24,x1=innerW-24;
+    const path=`M${x0},${y0} C${(x0+x1)/2},${y0} ${(x0+x1)/2},${y1} ${x1},${y1} L${x1},${y1+rh} C${(x0+x1)/2},${y1+rh} ${(x0+x1)/2},${y0+lh} ${x0},${y0+lh} Z`;
+
+    g.append('path').attr('d',path)
+      .attr('fill',colorScale(a))
+      .attr('opacity',0.35)
+      .attr('stroke','none')
+      .style('cursor','pointer')
+      .on('mouseover',function(event){
+        d3.select(this).attr('opacity',0.65);
+        tip.style.opacity='1';
+        tip.innerHTML=`<strong>${a}</strong> → <strong>${b}</strong><br>${v} case${v>1?'s':''}`;
+      })
+      .on('mousemove',function(event){
+        tip.style.left=(event.clientX+12)+'px';
+        tip.style.top=(event.clientY-10)+'px';
+      })
+      .on('mouseleave',function(){
+        d3.select(this).attr('opacity',0.35);
+        tip.style.opacity='0';
+      });
+  });
+
+  // Draw left bars
+  leftVals.forEach(v=>{
+    const n=leftNodes[v];
+    g.append('rect').attr('x',0).attr('y',n.y).attr('width',20).attr('height',n.h)
+      .attr('fill',colorScale(v)).attr('rx',2);
+    g.append('text').attr('x',-8).attr('y',n.y+n.h/2).attr('dy','0.35em')
+      .attr('text-anchor','end').attr('font-family',"'IBM Plex Mono',monospace")
+      .attr('font-size',10).attr('fill','#1a1714')
+      .text(v.length>22?v.slice(0,20)+'…':v);
+  });
+
+  // Draw right bars
+  rightVals.forEach(v=>{
+    const n=rightNodes[v];
+    g.append('rect').attr('x',innerW).attr('y',n.y).attr('width',20).attr('height',n.h)
+      .attr('fill','#c8c4ba').attr('rx',2);
+    g.append('text').attr('x',innerW+28).attr('y',n.y+n.h/2).attr('dy','0.35em')
+      .attr('text-anchor','start').attr('font-family',"'IBM Plex Mono',monospace")
+      .attr('font-size',10).attr('fill','#1a1714')
+      .text(v.length>22?v.slice(0,20)+'…':v);
+  });
+}
+</script>
+</body>
+</html>
