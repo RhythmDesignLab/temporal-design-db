@@ -106,8 +106,8 @@ select:focus{border-color:var(--accent)}
 .modal-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .modal-link{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:2px;transition:background .15s,border-color .15s;text-transform:uppercase}
 .modal-link:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.6)}
-.modal-circle{width:min(500px,82vw);height:min(500px,82vw);border-radius:50%;border:1.5px solid rgba(255,255,255,.7);position:relative;overflow:visible;background:var(--white);flex-shrink:0;box-shadow:0 12px 60px rgba(0,0,0,.25)}
-.modal-circle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:140%;height:140%}
+.modal-circle{width:min(500px,82vw);height:min(500px,82vw);border-radius:50%;border:none;position:relative;overflow:visible;background:transparent;flex-shrink:0}
+.modal-circle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:140%;height:140%;pointer-events:none}
 .modal-desc-wrap{max-width:460px;width:100%}
 .modal-desc{font-size:13px;font-weight:300;line-height:1.75;color:rgba(255,255,255,.85);padding:14px 18px;border:1px solid rgba(255,255,255,.2);border-left:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.08)}
 
@@ -389,11 +389,13 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <script>
 // ── AIRTABLE CONFIG ──
-const AIRTABLE_TOKEN = 'patlzxZ4UoG5BuDXL.cd55048ab00f722faf5cdf947a3ffd44e99d42d910d5e65418c7871f0ba486d4';
+const AIRTABLE_TOKEN = 'pat8ac46AXD3J6fa3.287f3cc8f0fb3acaa304abf5406324a8ade599b0881f5cb63d30d303b190b220';
 const BASE_ID        = 'appchoJ2QZHRG1tm6';
 const TABLE_NAME     = 'database ENG'; // controlla il nome esatto in Airtable
 
 let DATA = [];
+
+
 
 async function loadFromAirtable() {
   // loading indicator (optional element)
@@ -414,7 +416,7 @@ async function loadFromAirtable() {
     } while(offset);
   } catch(err) {
     console.error('Airtable error:', err.message);
-    alert('Errore caricamento dati: ' + err.message + '\nVerifica token e nome tabella.');
+    alert('Errore caricamento dati: ' + err.message);
     return;
   }
 
@@ -623,10 +625,10 @@ function openModal(d){
 }
 
 function buildRadialSVG(d){
-  const W=700, H=700;
-  const cx=350, cy=350;
-  const imgR=105;
-  const lineLen=128;
+  const W=820, H=820;
+  const cx=410, cy=410;
+  const imgR=210;  // double the original
+  const lineLen=50; // much shorter lines
 
   const fields=[
     {key:'domain',        label:'Domain'},
@@ -651,57 +653,55 @@ function buildRadialSVG(d){
     const count=val?(counts[val]||0):0;
     const maxCount=Object.values(counts).length?Math.max(...Object.values(counts)):1;
 
-    // terminal radius 9–28 px proportional to frequency
-    const tR=val?Math.max(9,Math.round(9+(count/maxCount)*19)):9;
+    // terminal radius 9–24 px proportional to frequency
+    const tR=val?Math.max(9,Math.round(9+(count/maxCount)*15)):9;
 
     // line start / end
-    const lx1=(cx+(imgR+5)*cosA).toFixed(1);
-    const ly1=(cy+(imgR+5)*sinA).toFixed(1);
+    const lx1=(cx+(imgR+4)*cosA).toFixed(1);
+    const ly1=(cy+(imgR+4)*sinA).toFixed(1);
     const tx= cx+(imgR+lineLen+tR)*cosA;
     const ty= cy+(imgR+lineLen+tR)*sinA;
     const lx2=(tx-(tR+2)*cosA).toFixed(1);
     const ly2=(ty-(tR+2)*sinA).toFixed(1);
 
-    parts.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="#c8c4ba" stroke-width="1"/>`);
+    // slightly thicker line
+    parts.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.5)" stroke-width="1.8"/>`);
 
-    // ── LABELS along the line ──
-    // Midpoint of spoke (55% toward terminal so labels sit closer to terminal side)
-    const mx=(cx+(imgR+lineLen*0.52)*cosA).toFixed(1);
-    const my=(cy+(imgR+lineLen*0.52)*sinA).toFixed(1);
+    // terminal circle (clickable)
+    const col=val?'rgba(180,180,255,1)':'rgba(255,255,255,0.2)';
+    const fillCol=val?'rgba(100,100,255,0.2)':'rgba(255,255,255,0.05)';
+    const dataAttrs=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer;pointer-events:auto"`:'';
+    parts.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.5" ${dataAttrs}/>`);
 
-    // Flip text for left-half spokes so it stays readable
-    const flip=cosA<-0.01;
-    const rot=(angleDeg+(flip?180:0)).toFixed(1);
-
-    const dispVal=val?(val.length>20?val.slice(0,18)+'\u2026':val):'—';
-
-    // group: translate to midpoint, rotate, then dy offsets place text above the line
-    // dy works in rotated space: dy=-N moves text N units "above" the rotated baseline
-    parts.push(`<g transform="translate(${mx},${my}) rotate(${rot})">
-      <text dy="-17" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="#aaa69e" letter-spacing="0.09em">${f.label.toUpperCase()}</text>
-      <text dy="-4"  text-anchor="middle" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1a1714" font-weight="400">${dispVal}</text>
-    </g>`);
-
-    // ── TERMINAL CIRCLE (clickable) ──
-    const col=val?'#0000ff':'#e0ddd6';
-    const dataAttrs=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer"`:'';
-    parts.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${col}" fill-opacity="${val?0.1:0.08}" stroke="${col}" stroke-width="1.5" ${dataAttrs}/>`);
-
-    // count inside terminal when large enough (not clickable separately, circle handles it)
+    // count inside terminal
     if(tR>=12&&val){
-      parts.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="9" font-family="IBM Plex Mono,monospace" fill="${col}" style="pointer-events:none">${count}</text>`);
+      parts.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
     }
+
+    // ── LABELS outside the terminal circle ──
+    const pad=tR+30;
+    let lbX, lbY, anchor;
+    if(Math.abs(cosA)>=0.42){
+      lbX=cosA>0?tx+pad:tx-pad; lbY=ty; anchor=cosA>0?'start':'end';
+    } else if(sinA<0){
+      lbX=tx; lbY=ty-pad; anchor='middle';
+    } else {
+      lbX=tx; lbY=ty+pad; anchor='middle';
+    }
+
+    const dispVal=val?(val.length>22?val.slice(0,20)+'\u2026':val):'\u2014';
+    parts.push(`<text x="${lbX.toFixed(1)}" y="${(lbY-11).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.55)" letter-spacing="0.09em">${f.label.toUpperCase()}</text>`);
+    parts.push(`<text x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}"  text-anchor="${anchor}" font-size="14" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.92)">${dispVal}</text>`);
   });
 
   // center image or placeholder
   if(d.image){
     parts.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);
   } else {
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="#f3f2ee"/>`);
-    parts.push(`<line x1="${cx-35}" y1="${cy-35}" x2="${cx+35}" y2="${cy+35}" stroke="#c8c4ba" stroke-width="1.5"/>`);
-    parts.push(`<line x1="${cx+35}" y1="${cy-35}" x2="${cx-35}" y2="${cy+35}" stroke="#c8c4ba" stroke-width="1.5"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="rgba(255,255,255,0.08)"/>`);
+    parts.push(`<line x1="${cx-60}" y1="${cy-60}" x2="${cx+60}" y2="${cy+60}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>`);
+    parts.push(`<line x1="${cx+60}" y1="${cy-60}" x2="${cx-60}" y2="${cy+60}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>`);
   }
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="#1a1714" stroke-width="1.5"/>`);
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;margin:0 auto;max-width:100%">${parts.join('')}</svg>`;
 }
