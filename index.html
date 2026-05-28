@@ -389,7 +389,7 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <script>
 // ── AIRTABLE CONFIG ──
-const AIRTABLE_TOKEN = 'patOi4i1eTlbmdct9.ad2872e37806b0be9a6097581206fd7946cc89b2f9a8f5e3f87dff6be8fd30c9';
+const AIRTABLE_TOKEN = 'patoGMBj355nAZ8RP.8fb10ad733e66954ee6a7b224e4a586a6eafbda54bdee5ed8fb594404e2f08be';
 const BASE_ID        = 'appchoJ2QZHRG1tm6';
 const TABLE_NAME     = 'database ENG'; // controlla il nome esatto in Airtable
 
@@ -430,9 +430,10 @@ async function loadFromAirtable() {
     // helper: extract URL whether field is string or Airtable URL object
     const getUrl = v => {
       if(!v) return '';
-      if(typeof v === 'string') return v;
-      if(typeof v === 'object' && v.url) return v.url;
-      return String(v);
+      let s = typeof v === 'object' && v.url ? v.url : String(v);
+      // strip angle brackets that Airtable sometimes wraps around URLs
+      s = s.trim().replace(/^<|>$/g, '');
+      return s;
     };
     return {
       id:             String(f['Number']            || ''),
