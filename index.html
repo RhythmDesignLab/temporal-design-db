@@ -556,6 +556,84 @@ function switchInner(id,btn){
   if(id==='alluvial')buildAlluvial();
 }
 
+
+// ── POPULATE SELECTS ──
+function populateSelects(){
+  const fields=[['f-domain','domain'],['f-focus','temporalFocus'],['f-op','operation'],
+    ['f-orient','orientation'],['f-intent','intent'],['f-tech','tech'],['f-sense','sense'],['f-interact','interaction']];
+  fields.forEach(([id,key])=>{
+    const vals=[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort();
+    const sel=document.getElementById(id);
+    vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+  });
+}
+
+// ── FILTER SYNC ──
+function syncFromSelect(field,selId){AF[field]=document.getElementById(selId).value;}
+function removeFilter(field){
+  AF[field]='';
+  const selId=SELECT_MAP[field];
+  if(selId)document.getElementById(selId).value='';
+  applyAll();
+}
+
+// ── CORE FILTER ──
+function applyAll(){
+  const q=(document.getElementById('cardSearch').value||'').toLowerCase();
+  filteredData=DATA.filter(d=>{
+    const txt=[d.id,d.name,d.author,d.desc,d.type,d.representation,d.solution].join(' ').toLowerCase();
+    return(!q||txt.includes(q))&&Object.entries(AF).every(([k,v])=>!v||d[k]===v);
+  });
+  renderChips();
+  renderCards(filteredData);
+}
+
+// ── CHIPS ──
+function renderChips(){
+  const html=Object.entries(AF).filter(([k,v])=>v)
+    .map(([k,v])=>`<span class="chip" onclick="removeFilter('${k}')"><span>${FIELD_LABEL[k]}: <strong>${v}</strong></span><span class="chip-x">✕</span></span>`)
+    .join('');
+  document.querySelectorAll('.filter-chips').forEach(el=>el.innerHTML=html);
+}
+
+// ── ESC ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ── RENDER CARDS ──
+function renderCards(data){
+  const grid=document.getElementById('cardsGrid');
+  grid.innerHTML='';
+  document.getElementById('caseCount').textContent=data.length+' / '+DATA.length;
+  if(!data.length){grid.innerHTML='<p style="text-align:center;padding:48px;color:var(--muted-light);font-style:italic">No results.</p>';return;}
+  data.forEach((d,i)=>{
+    const c=document.createElement('div');
+    c.className='card';
+    c.style.animationDelay=(i*15)+'ms';
+    c.style.cursor='pointer';
+    const imgHtml=d.image
+      ?`<img class="card-img" src="${d.image}" alt="${esc(d.name)}" loading="lazy">`
+      :`<div class="card-img-placeholder"><span>No image</span></div>`;
+    c.innerHTML=`
+      ${imgHtml}
+      <div class="card-body">
+        <div class="card-id">${esc(d.id)} · ${esc(String(d.year))}</div>
+        <div class="card-title" style="margin-bottom:4px">${esc(d.name)}</div>
+        <div class="card-author">${esc(d.author)}</div>
+        <div class="card-desc">${esc(d.desc)}</div>
+        <div class="card-tags">
+          <span class="tag c-domain clickable" onclick="event.stopPropagation();tagClick('domain','${esc(d.domain)}')">${esc(d.domain)}</span>
+          <span class="tag c-focus clickable" onclick="event.stopPropagation();tagClick('temporalFocus','${esc(d.temporalFocus)}')">${esc(d.temporalFocus)}</span>
+          <span class="tag c-tech clickable" onclick="event.stopPropagation();tagClick('tech','${esc(d.tech)}')">${esc(d.tech)}</span>
+          <span class="tag c-interact clickable" onclick="event.stopPropagation();tagClick('interaction','${esc(d.interaction)}')">${esc(d.interaction)}</span>
+          <span class="tag c-sense clickable" onclick="event.stopPropagation();tagClick('sense','${esc(d.sense)}')">${esc(d.sense)}</span>
+          <span class="tag c-intent clickable" onclick="event.stopPropagation();tagClick('intent','${esc(d.intent)}')">${esc(d.intent)}</span>
+        </div>
+      </div>`;
+    c.addEventListener('click',()=>openModal(d));
+    grid.appendChild(c);
+  });
+}
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', ()=>{
   initTitleAnim();
