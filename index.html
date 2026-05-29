@@ -47,15 +47,18 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 .inner{display:none}.inner.active{display:block}
 
 /* HERO */
-.hero{border-bottom:1px solid var(--border);padding:60px 32px 48px;max-width:960px;margin:0 auto}
+.hero{border-bottom:1px solid var(--border);padding:56px 32px 48px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr auto;align-items:center;gap:48px}
+.hero-left{min-width:0}
+.hero-circles{display:flex;gap:20px;flex-shrink:0}
+.stat-circle{width:110px;height:110px;border-radius:50%;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;transition:border-color .2s}
+.stat-circle:hover{border-color:var(--accent)}
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
 .eyebrow::after{content:'';flex:1;height:1px;background:var(--border);max-width:120px}
 h1{font-family:'Libre Baskerville',serif;font-size:clamp(26px,4.5vw,50px);font-weight:400;line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
 h1 em{font-style:italic;color:var(--accent)}
 .hero-sub{font-size:15px;font-weight:300;color:var(--muted);max-width:540px;line-height:1.7;margin-bottom:32px}
-.hero-stats{display:flex;gap:40px;flex-wrap:wrap}
-.stat-num{font-family:'Libre Baskerville',serif;font-size:28px;font-style:italic;color:var(--text);line-height:1;display:block}
-.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted-light)}
+.stat-num{font-family:'Libre Baskerville',serif;font-size:26px;font-style:italic;color:var(--text);line-height:1;display:block;text-align:center}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-light);text-align:center}
 
 /* SUB-NAV */
 .sub-nav{display:flex;border-bottom:1px solid var(--border);padding:0 32px;background:var(--white);overflow-x:auto;scrollbar-width:none}
@@ -64,6 +67,7 @@ h1 em{font-style:italic;color:var(--accent)}
 .sub-nav button:hover{color:var(--text)}
 .sub-nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
 .content{max-width:1400px;margin:0 auto;padding:32px 32px 80px}
+
 
 /* FILTER CHIPS */
 .filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
@@ -145,6 +149,27 @@ select:focus{border-color:var(--accent)}
 .chart-wrap.h340{height:340px}
 .chart-wrap.h420{height:420px}
 
+/* ALLUVIAL LAYOUT */
+#alluvialLayout{display:flex;gap:20px;align-items:flex-start}
+#sankeyContainer{flex:1;min-width:0}
+#flowPanel{width:260px;flex-shrink:0;display:none;background:var(--white);border:1px solid var(--border);border-radius:2px;max-height:520px;overflow-y:auto}
+#flowPanel.open{display:block}
+.flow-panel-head{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:1}
+#flowPanelTitle{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);line-height:1.5;flex:1;padding-right:8px}
+#flowPanelTitle strong{color:var(--accent);display:block;font-size:11px}
+.flow-panel-close{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:0;line-height:1;transition:color .15s}
+.flow-panel-close:hover{color:var(--text)}
+#flowPanelList{padding:8px 0}
+.flow-case-item{display:block;padding:9px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.flow-case-item:last-child{border-bottom:none}
+.flow-case-item:hover{background:var(--surface)}
+.flow-case-id{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.12em;margin-bottom:2px}
+.flow-case-name{font-family:'Libre Baskerville',serif;font-size:13px;color:var(--text);line-height:1.3}
+.flow-case-author{font-size:11px;color:var(--muted);margin-top:2px}
+@media(max-width:768px){
+  #alluvialLayout{flex-direction:column}
+  #flowPanel{width:100%;max-height:360px}
+}
 /* SANKEY / ALLUVIAL */
 .sankey-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:2px}
 .sankey-controls label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
@@ -187,7 +212,8 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
   .sub-nav{padding:0 20px}
   .nav-links{display:none}
   .hamburger{display:flex}
-  .hero-stats{gap:24px}
+  .hero{grid-template-columns:1fr;gap:28px}
+.hero-circles{justify-content:flex-start}
   .controls{flex-direction:column;align-items:stretch}
   .res-count{margin-left:0}
   select{width:100%}
@@ -222,13 +248,20 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 <!-- ══ DATABASE PAGE ══ -->
 <div class="page active" id="page-db">
   <div class="hero">
-    <p class="eyebrow">Research Database</p>
-    <h1>Temporal <em>Artifacts</em><br>&amp; Design Cases</h1>
-    <p class="hero-sub">A curated collection of objects, interfaces, and systems that represent, manipulate, or communicate the experience of time.</p>
-    <div class="hero-stats">
-      <div><span class="stat-num" id="totalCount">126</span><span class="stat-label">Case Studies</span></div>
-      <div><span class="stat-num">2400+</span><span class="stat-label">Years Covered</span></div>
-      <div><span class="stat-num" id="domainCount">—</span><span class="stat-label">Domains</span></div>
+    <div class="hero-left">
+      <p class="eyebrow">Research Database</p>
+      <h1>Temporal <em>Artifacts</em><br>&amp; Design Cases</h1>
+      <p class="hero-sub">A curated collection of objects, interfaces, and systems that represent, manipulate, or communicate the experience of time.</p>
+    </div>
+    <div class="hero-circles">
+      <div class="stat-circle">
+        <span class="stat-num" id="totalCount">—</span>
+        <span class="stat-label">Case Studies</span>
+      </div>
+      <div class="stat-circle">
+        <span class="stat-num">2400+</span>
+        <span class="stat-label">Years Covered</span>
+      </div>
     </div>
   </div>
 
@@ -245,21 +278,22 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
       <div id="chips-cards" class="filter-chips"></div>
       <div class="controls">
         <div class="search-wrap"><span class="si">⌕</span><input type="text" id="cardSearch" placeholder="Search name, author, description…" oninput="applyAll()"></div>
-        <select id="f-domain" onchange="syncFromSelect('domain','f-domain');applyAll()"><option value="">All Domains</option></select>
+          <select id="f-domain" onchange="syncFromSelect('domain','f-domain');applyAll()"><option value="">All Domains</option></select>
         <select id="f-focus" onchange="syncFromSelect('temporalFocus','f-focus');applyAll()"><option value="">All Temporal Focus</option></select>
-        <select id="f-op" onchange="syncFromSelect('operation','f-op');applyAll()"><option value="">All Operations</option></select>
-        <select id="f-orient" onchange="syncFromSelect('orientation','f-orient');applyAll()"><option value="">All Orientations</option></select>
-        <select id="f-intent" onchange="syncFromSelect('intent','f-intent');applyAll()"><option value="">All Intents</option></select>
-        <select id="f-tech" onchange="syncFromSelect('tech','f-tech');applyAll()"><option value="">All Technologies</option></select>
-        <select id="f-sense" onchange="syncFromSelect('sense','f-sense');applyAll()"><option value="">All Senses</option></select>
-        <select id="f-interact" onchange="syncFromSelect('interaction','f-interact');applyAll()"><option value="">All Interactions</option></select>
-        <span class="res-count" id="caseCount"></span>
+          <select id="f-op" onchange="syncFromSelect('operation','f-op');applyAll()"><option value="">All Operations</option></select>
+          <select id="f-orient" onchange="syncFromSelect('orientation','f-orient');applyAll()"><option value="">All Orientations</option></select>
+          <select id="f-intent" onchange="syncFromSelect('intent','f-intent');applyAll()"><option value="">All Intents</option></select>
+          <select id="f-tech" onchange="syncFromSelect('tech','f-tech');applyAll()"><option value="">All Technologies</option></select>
+          <select id="f-sense" onchange="syncFromSelect('sense','f-sense');applyAll()"><option value="">All Senses</option></select>
+          <select id="f-interact" onchange="syncFromSelect('interaction','f-interact');applyAll()"><option value="">All Interactions</option></select>
+          <span class="res-count" id="caseCount"></span>
+        </div>
+        <div class="cards-grid" id="cardsGrid"></div>
       </div>
-      <div class="cards-grid" id="cardsGrid"></div>
     </div>
 
     <!-- VIZ -->
-    <div class="inner" id="inner-viz">
+    <div class="inner" id="inner-viz"><div class="content" style="padding-top:32px;padding-bottom:80px">
       <div class="viz-grid">
         <div class="chart-card"><div class="chart-title">Artifact Domain</div><div class="chart-wrap h260"><canvas id="cDomain"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Interaction Mode</div><div class="chart-wrap h260"><canvas id="cInteract"></canvas></div></div>
@@ -273,8 +307,10 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
       </div>
     </div>
 
+</div></div>
+
     <!-- ALLUVIAL -->
-    <div class="inner" id="inner-alluvial">
+    <div class="inner" id="inner-alluvial"><div class="content" style="padding-top:32px;padding-bottom:80px">
       <div class="sankey-controls">
         <div>
           <label>From</label>
@@ -304,9 +340,18 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
         </div>
         <button class="sankey-btn" onclick="buildAlluvial()">Update diagram</button>
       </div>
-      <div id="sankeyContainer"></div>
+      <div id="alluvialLayout">
+        <div id="sankeyContainer"></div>
+        <div id="flowPanel">
+          <div class="flow-panel-head">
+            <div id="flowPanelTitle"></div>
+            <button class="flow-panel-close" onclick="closeFlowPanel()">✕</button>
+          </div>
+          <div id="flowPanelList"></div>
+        </div>
+      </div>
       <div class="sankey-tooltip" id="sankeyTip"></div>
-    </div>
+    </div></div>
 
   </div>
 </div>
@@ -384,17 +429,18 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 </div>
 
 <footer>
-  <p>Temporal Design Database · 126 case studies</p>
-  <p>HTML · CSS · Chart.js · D3.js</p>
+  <p>Temporal Design Database</p>
+  <p id="footerDates"></p>
 </footer>
 
 <script>
 // ── AIRTABLE CONFIG ──
-const AIRTABLE_TOKEN = 'patlgqc3VImdMrZ0A.46de661a2ca6ec46cf5fbaf68986f7d548556b83ccb819a31c5959d3fdeb2a92';
+const AIRTABLE_TOKEN = 'patTKDP36aocyKrpw.ad8f95e8b244e7b465a782d0b4d72005a4a3ad598f31d9957c441197848b30ca';
 const BASE_ID        = 'appchoJ2QZHRG1tm6';
 const TABLE_NAME     = 'database ENG'; // controlla il nome esatto in Airtable
 
 let DATA = [];
+
 
 
 
@@ -415,8 +461,6 @@ async function loadFromAirtable() {
     } while(offset);
   } catch(err) {
     console.error('Airtable error:', err.message);
-    alert('Errore caricamento dati: ' + err.message);
-    return;
   }
 
   DATA = records.map(r => {
@@ -463,11 +507,16 @@ async function loadFromAirtable() {
 
 
 
-  // Init everything once data is loaded
+  // Replace test data with real Airtable data
   initFieldCounts();
+  // Reset selects before repopulating
+  ['f-domain','f-focus','f-op','f-orient','f-intent','f-tech','f-sense','f-interact'].forEach(id=>{
+    const sel=document.getElementById(id);
+    while(sel.options.length>1) sel.remove(1);
+  });
   populateSelects();
   applyAll();
-  buildDecadeChart();
+  chartsBuilt=false; // force charts to rebuild with new data next time viz tab is opened
   document.getElementById('domainCount').textContent = new Set(DATA.map(d=>d.domain)).size;
   document.getElementById('totalCount').textContent  = DATA.length;
 }
@@ -499,69 +548,18 @@ function switchInner(id,btn){
   document.querySelectorAll('.sub-nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('inner-'+id).classList.add('active');
   btn.classList.add('active');
-  if(!chartsBuilt&&id==='viz'){buildCharts();chartsBuilt=true;}
+  if(!chartsBuilt&&id==='viz'){
+    buildCharts();
+    buildDecadeChart();
+    chartsBuilt=true;
+  }
   if(id==='alluvial')buildAlluvial();
 }
 
 // ── INIT ──
-window.addEventListener('DOMContentLoaded', ()=>{ initTitleAnim(); loadFromAirtable(); });
-
-function populateSelects(){
-  const fields=[['f-domain','domain'],['f-focus','temporalFocus'],['f-op','operation'],
-    ['f-orient','orientation'],['f-intent','intent'],['f-tech','tech'],['f-sense','sense'],['f-interact','interaction']];
-  fields.forEach(([id,key])=>{
-    const vals=[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort();
-    const sel=document.getElementById(id);
-    vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
-  });
-}
-
-// ── TAG CLICK ──
-function tagClick(field,value){
-  AF[field]=AF[field]===value?'':value;
-  const selId=SELECT_MAP[field];
-  if(selId)document.getElementById(selId).value=AF[field];
-  applyAll();
-}
-function syncFromSelect(field,selId){
-  AF[field]=document.getElementById(selId).value;
-}
-function removeFilter(field){
-  AF[field]='';
-  const selId=SELECT_MAP[field];
-  if(selId)document.getElementById(selId).value='';
-  applyAll();
-}
-
-// ── CORE FILTER ──
-function applyAll(){
-  const q=(document.getElementById('cardSearch').value||'').toLowerCase();
-  filteredData=DATA.filter(d=>{
-    const txt=[d.id,d.name,d.author,d.desc,d.type,d.representation,d.solution].join(' ').toLowerCase();
-    return(!q||txt.includes(q))
-      &&Object.entries(AF).every(([k,v])=>!v||d[k]===v);
-  });
-  renderChips();
-  renderCards(filteredData);
-}
-
-// ── CHIPS ──
-function renderChips(){
-  const html=Object.entries(AF).filter(([k,v])=>v)
-    .map(([k,v])=>`<span class="chip" onclick="removeFilter('${k}')"><span>${FIELD_LABEL[k]}: <strong>${v}</strong></span><span class="chip-x">✕</span></span>`)
-    .join('');
-  document.querySelectorAll('.filter-chips').forEach(el=>el.innerHTML=html);
-}
-
-// ── ESC ──
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-
-// ── CARDS ──
-function renderCards(data){
-  const grid=document.getElementById('cardsGrid');
-  grid.innerHTML='';
-  document.getElementById('caseCount').textContent=data.length+' / '+DATA.length;
-  if(!data.length){grid.innerHTML='<p style="text-align:center;padding:48px;color:var(--muted-light);font-style:italic">No results.</p>';return;}
+window.addEventListener('DOMContentLoaded', ()=>{
+  initTitleAnim();
+  // Show test data immediately so the page is usable
   data.forEach((d,i)=>{
     const c=document.createElement('div');
     c.className='card';
@@ -796,7 +794,6 @@ function buildAlluvial(){
   const toKey=document.getElementById('sankeyTo').value;
   if(fromKey===toKey){alert('Please select two different dimensions.');return;}
 
-  // Build flows
   const flows={};
   DATA.forEach(d=>{
     const a=d[fromKey],b=d[toKey];
@@ -807,116 +804,194 @@ function buildAlluvial(){
 
   const container=document.getElementById('sankeyContainer');
   container.innerHTML='';
+  closeFlowPanel();
 
-  const W=Math.min(container.clientWidth||900,1200),H=520;
-  const margin={top:20,right:200,bottom:20,left:200};
-  const innerW=W-margin.left-margin.right;
-  const innerH=H-margin.top-margin.bottom;
-
-  // Collect nodes
   const leftVals=[...new Set(DATA.map(d=>d[fromKey]).filter(Boolean))].sort();
   const rightVals=[...new Set(DATA.map(d=>d[toKey]).filter(Boolean))].sort();
-
-  // Count totals
   const leftTotals={},rightTotals={};
   Object.entries(flows).forEach(([k,v])=>{
     const [a,b]=k.split('|||');
     leftTotals[a]=(leftTotals[a]||0)+v;
     rightTotals[b]=(rightTotals[b]||0)+v;
   });
-
   const total=Object.values(leftTotals).reduce((a,b)=>a+b,0);
+  const colorScale=d3.scaleOrdinal(d3.schemeTableau10);
+  const tip=document.getElementById('sankeyTip');
+  const vertical=window.innerWidth<768;
+
+  if(vertical){
+    buildAlluvialV(container,flows,fromKey,toKey,leftVals,rightVals,leftTotals,rightTotals,total,colorScale,tip);
+  } else {
+    buildAlluvialH(container,flows,fromKey,toKey,leftVals,rightVals,leftTotals,rightTotals,total,colorScale,tip);
+  }
+}
+
+function attachRibbonEvents(path, a, b, fromKey, toKey, v, tip){
+  path.attr('class','alluvial-ribbon').style('cursor','pointer')
+    .on('mouseover',function(ev){
+      d3.select(this).attr('opacity',0.65);
+      tip.style.opacity='1';
+      tip.innerHTML=`<strong>${a}</strong> → <strong>${b}</strong><br>${v} case${v>1?'s':''}`;
+    })
+    .on('mousemove',function(ev){
+      tip.style.left=(ev.clientX+12)+'px';
+      tip.style.top=(ev.clientY-10)+'px';
+    })
+    .on('mouseleave',function(){
+      if(!d3.select(this).classed('selected'))d3.select(this).attr('opacity',0.35);
+      tip.style.opacity='0';
+    })
+    .on('click',function(){
+      d3.selectAll('.alluvial-ribbon').attr('opacity',0.2).classed('selected',false);
+      d3.select(this).attr('opacity',0.75).classed('selected',true);
+      showFlowPanel(a,b,fromKey,toKey,v);
+    });
+}
+
+// ── HORIZONTAL (desktop) ──
+function buildAlluvialH(container,flows,fromKey,toKey,leftVals,rightVals,leftTotals,rightTotals,total,colorScale,tip){
+  const W=Math.min(container.clientWidth||900,1200),H=520;
+  const margin={top:20,right:200,bottom:20,left:200};
+  const innerW=W-margin.left-margin.right;
+  const innerH=H-margin.top-margin.bottom;
   const gap=8;
 
-  // Layout left nodes
   const leftH=innerH-(leftVals.length-1)*gap;
   const leftNodes={};let ly=0;
-  leftVals.forEach(v=>{
-    const h=Math.max(4,(leftTotals[v]/total)*leftH);
-    leftNodes[v]={y:ly,h};
-    ly+=h+gap;
-  });
+  leftVals.forEach(v=>{const h=Math.max(4,(leftTotals[v]/total)*leftH);leftNodes[v]={y:ly,h};ly+=h+gap;});
 
-  // Layout right nodes
   const rightH=innerH-(rightVals.length-1)*gap;
   const rightNodes={};let ry=0;
-  rightVals.forEach(v=>{
-    const h=Math.max(4,(rightTotals[v]/total)*rightH);
-    rightNodes[v]={y:ry,h};
-    ry+=h+gap;
-  });
+  rightVals.forEach(v=>{const h=Math.max(4,(rightTotals[v]/total)*rightH);rightNodes[v]={y:ry,h};ry+=h+gap;});
 
-  // Track offsets for ribbons
   const leftOff={},rightOff={};
   leftVals.forEach(v=>leftOff[v]=0);
   rightVals.forEach(v=>rightOff[v]=0);
 
-  const svg=d3.select(container).append('svg')
-    .attr('width',W).attr('height',H)
-    .attr('viewBox',`0 0 ${W} ${H}`)
-    .style('overflow','visible');
-
+  const svg=d3.select(container).append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).style('overflow','visible');
   const g=svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
 
-  const colorScale=d3.scaleOrdinal(d3.schemeTableau10);
-  const tip=document.getElementById('sankeyTip');
-
-  // Draw ribbons
   Object.entries(flows).forEach(([k,v])=>{
     const [a,b]=k.split('|||');
     const lNode=leftNodes[a],rNode=rightNodes[b];
-    const lh=(v/total)*leftH;
-    const rh=(v/total)*rightH;
-    const y0=lNode.y+leftOff[a];
-    const y1=rNode.y+rightOff[b];
-    leftOff[a]+=lh;
-    rightOff[b]+=rh;
-
+    const lh=(v/total)*leftH, rh=(v/total)*rightH;
+    const y0=lNode.y+leftOff[a], y1=rNode.y+rightOff[b];
+    leftOff[a]+=lh; rightOff[b]+=rh;
     const x0=24,x1=innerW-24;
     const path=`M${x0},${y0} C${(x0+x1)/2},${y0} ${(x0+x1)/2},${y1} ${x1},${y1} L${x1},${y1+rh} C${(x0+x1)/2},${y1+rh} ${(x0+x1)/2},${y0+lh} ${x0},${y0+lh} Z`;
-
-    g.append('path').attr('d',path)
-      .attr('fill',colorScale(a))
-      .attr('opacity',0.35)
-      .attr('stroke','none')
-      .style('cursor','pointer')
-      .on('mouseover',function(event){
-        d3.select(this).attr('opacity',0.65);
-        tip.style.opacity='1';
-        tip.innerHTML=`<strong>${a}</strong> → <strong>${b}</strong><br>${v} case${v>1?'s':''}`;
-      })
-      .on('mousemove',function(event){
-        tip.style.left=(event.clientX+12)+'px';
-        tip.style.top=(event.clientY-10)+'px';
-      })
-      .on('mouseleave',function(){
-        d3.select(this).attr('opacity',0.35);
-        tip.style.opacity='0';
-      });
+    attachRibbonEvents(g.append('path').attr('d',path).attr('fill',colorScale(a)).attr('opacity',0.35).attr('stroke','none'),a,b,fromKey,toKey,v,tip);
   });
 
-  // Draw left bars
   leftVals.forEach(v=>{
     const n=leftNodes[v];
-    g.append('rect').attr('x',0).attr('y',n.y).attr('width',20).attr('height',n.h)
-      .attr('fill',colorScale(v)).attr('rx',2);
-    g.append('text').attr('x',-8).attr('y',n.y+n.h/2).attr('dy','0.35em')
-      .attr('text-anchor','end').attr('font-family',"'IBM Plex Mono',monospace")
-      .attr('font-size',10).attr('fill','#1a1714')
-      .text(v.length>22?v.slice(0,20)+'…':v);
+    g.append('rect').attr('x',0).attr('y',n.y).attr('width',20).attr('height',n.h).attr('fill',colorScale(v)).attr('rx',2);
+    g.append('text').attr('x',-8).attr('y',n.y+n.h/2).attr('dy','0.35em').attr('text-anchor','end').attr('font-family',"'IBM Plex Mono',monospace").attr('font-size',10).attr('fill','#1a1714').text(v.length>22?v.slice(0,20)+'…':v);
   });
-
-  // Draw right bars
   rightVals.forEach(v=>{
     const n=rightNodes[v];
-    g.append('rect').attr('x',innerW).attr('y',n.y).attr('width',20).attr('height',n.h)
-      .attr('fill','#c8c4ba').attr('rx',2);
-    g.append('text').attr('x',innerW+28).attr('y',n.y+n.h/2).attr('dy','0.35em')
-      .attr('text-anchor','start').attr('font-family',"'IBM Plex Mono',monospace")
-      .attr('font-size',10).attr('fill','#1a1714')
-      .text(v.length>22?v.slice(0,20)+'…':v);
+    g.append('rect').attr('x',innerW).attr('y',n.y).attr('width',20).attr('height',n.h).attr('fill','#c8c4ba').attr('rx',2);
+    g.append('text').attr('x',innerW+28).attr('y',n.y+n.h/2).attr('dy','0.35em').attr('text-anchor','start').attr('font-family',"'IBM Plex Mono',monospace").attr('font-size',10).attr('fill','#1a1714').text(v.length>22?v.slice(0,20)+'…':v);
   });
 }
+
+// ── VERTICAL (mobile) ──
+function buildAlluvialV(container,flows,fromKey,toKey,leftVals,rightVals,leftTotals,rightTotals,total,colorScale,tip){
+  const W=Math.min(container.clientWidth||360,500);
+  const margin={top:90,right:10,bottom:90,left:10};
+  const innerW=W-margin.left-margin.right;
+  const innerH=420;
+  const H=innerH+margin.top+margin.bottom;
+  const gap=5;
+  const midH=innerH/2;
+  const barH=14;
+
+  // top nodes (source) arranged horizontally
+  const topW=innerW-(leftVals.length-1)*gap;
+  const topNodes={};let tx=0;
+  leftVals.forEach(v=>{const w=Math.max(3,(leftTotals[v]/total)*topW);topNodes[v]={x:tx,w};tx+=w+gap;});
+
+  // bottom nodes (target) arranged horizontally
+  const botW=innerW-(rightVals.length-1)*gap;
+  const botNodes={};let bx=0;
+  rightVals.forEach(v=>{const w=Math.max(3,(rightTotals[v]/total)*botW);botNodes[v]={x:bx,w};bx+=w+gap;});
+
+  const topOff={},botOff={};
+  leftVals.forEach(v=>topOff[v]=0);
+  rightVals.forEach(v=>botOff[v]=0);
+
+  const svg=d3.select(container).append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).style('overflow','visible');
+  const g=svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  Object.entries(flows).forEach(([k,v])=>{
+    const [a,b]=k.split('|||');
+    const tNode=topNodes[a],bNode=botNodes[b];
+    const tw=(v/total)*topW, bw=(v/total)*botW;
+    const x0=tNode.x+topOff[a], x1=bNode.x+botOff[b];
+    topOff[a]+=tw; botOff[b]+=bw;
+    const y0=barH, y1=innerH-barH;
+    const path=`M${x0},${y0} C${x0},${midH} ${x1},${midH} ${x1},${y1} L${x1+bw},${y1} C${x1+bw},${midH} ${x0+tw},${midH} ${x0+tw},${y0} Z`;
+    attachRibbonEvents(g.append('path').attr('d',path).attr('fill',colorScale(a)).attr('opacity',0.35).attr('stroke','none'),a,b,fromKey,toKey,v,tip);
+  });
+
+  // top bars + rotated labels above
+  leftVals.forEach(v=>{
+    const n=topNodes[v];
+    g.append('rect').attr('x',n.x).attr('y',0).attr('width',n.w).attr('height',barH).attr('fill',colorScale(v)).attr('rx',2);
+    const lx=n.x+n.w/2, ly=-6;
+    g.append('text').attr('transform',`rotate(-45,${lx},${ly})`).attr('x',lx).attr('y',ly)
+      .attr('text-anchor','start').attr('font-family',"'IBM Plex Mono',monospace").attr('font-size',9).attr('fill','#1a1714')
+      .text(v.length>18?v.slice(0,16)+'…':v);
+  });
+
+  // bottom bars + rotated labels below
+  rightVals.forEach(v=>{
+    const n=botNodes[v];
+    g.append('rect').attr('x',n.x).attr('y',innerH-barH).attr('width',n.w).attr('height',barH).attr('fill','#c8c4ba').attr('rx',2);
+    const lx=n.x+n.w/2, ly=innerH+8;
+    g.append('text').attr('transform',`rotate(45,${lx},${ly})`).attr('x',lx).attr('y',ly)
+      .attr('text-anchor','start').attr('font-family',"'IBM Plex Mono',monospace").attr('font-size',9).attr('fill','#1a1714')
+      .text(v.length>18?v.slice(0,16)+'…':v);
+  });
+}// ── FLOW PANEL ──
+const FIELD_LABEL_MAP={domain:'Artifact Domain',temporalFocus:'Temporal Focus',operation:'Operation',orientation:'Orientation',intent:'Design Intent',tech:'Technology',sense:'Sensory Modality',interaction:'Interaction'};
+
+function showFlowPanel(fromVal, toVal, fromKey, toKey, count){
+  const panel = document.getElementById('flowPanel');
+  const titleEl = document.getElementById('flowPanelTitle');
+  const listEl  = document.getElementById('flowPanelList');
+
+  // title
+  titleEl.innerHTML=`${FIELD_LABEL_MAP[fromKey]||fromKey} → ${FIELD_LABEL_MAP[toKey]||toKey}<strong>${fromVal} → ${toVal}</strong><span style="font-size:9px;color:var(--muted-light)">${count} case${count>1?'s':''}</span>`;
+
+  // filter matching cases
+  const matches = DATA.filter(d=>d[fromKey]===fromVal && d[toKey]===toVal);
+
+  listEl.innerHTML = matches.map(d=>`
+    <div class="flow-case-item" onclick="openModal(${JSON.stringify(d).replace(/"/g,'&quot;')})">
+      <div class="flow-case-id">${d.id} · ${d.year}</div>
+      <div class="flow-case-name">${d.name}</div>
+      <div class="flow-case-author">${d.author}</div>
+    </div>`).join('');
+
+  panel.classList.add('open');
+}
+
+function closeFlowPanel(){
+  document.getElementById('flowPanel').classList.remove('open');
+  d3.selectAll('.alluvial-ribbon').attr('opacity',0.35).classed('selected',false);
+}
+
+
+// ── FOOTER DATE ──
+(function(){
+  const start='15/05/2026';
+  const t=new Date();
+  const dd=String(t.getDate()).padStart(2,'0');
+  const mm=String(t.getMonth()+1).padStart(2,'0');
+  const yy=t.getFullYear();
+  const el=document.getElementById('footerDates');
+  if(el) el.textContent=start+' – '+dd+'/'+mm+'/'+yy;
+})();
 </script>
 </body>
 </html>
