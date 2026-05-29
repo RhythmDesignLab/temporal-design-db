@@ -559,35 +559,8 @@ function switchInner(id,btn){
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', ()=>{
   initTitleAnim();
-  // Show test data immediately so the page is usable
-  data.forEach((d,i)=>{
-    const c=document.createElement('div');
-    c.className='card';
-    c.style.animationDelay=(i*15)+'ms';
-    c.style.cursor='pointer';
-    const imgHtml = d.image
-      ? `<img class="card-img" src="${d.image}" alt="${esc(d.name)}" loading="lazy">`
-      : `<div class="card-img-placeholder"><span>No image</span></div>`;
-    c.innerHTML=`
-      ${imgHtml}
-      <div class="card-body">
-        <div class="card-id">${esc(d.id)} · ${esc(String(d.year))}</div>
-        <div class="card-title" style="margin-bottom:4px">${esc(d.name)}</div>
-        <div class="card-author">${esc(d.author)}</div>
-        <div class="card-desc">${esc(d.desc)}</div>
-        <div class="card-tags">
-          <span class="tag c-domain clickable" onclick="event.stopPropagation();tagClick('domain','${esc(d.domain)}')">${esc(d.domain)}</span>
-          <span class="tag c-focus clickable" onclick="event.stopPropagation();tagClick('temporalFocus','${esc(d.temporalFocus)}')">${esc(d.temporalFocus)}</span>
-          <span class="tag c-tech clickable" onclick="event.stopPropagation();tagClick('tech','${esc(d.tech)}')">${esc(d.tech)}</span>
-          <span class="tag c-interact clickable" onclick="event.stopPropagation();tagClick('interaction','${esc(d.interaction)}')">${esc(d.interaction)}</span>
-          <span class="tag c-sense clickable" onclick="event.stopPropagation();tagClick('sense','${esc(d.sense)}')">${esc(d.sense)}</span>
-          <span class="tag c-intent clickable" onclick="event.stopPropagation();tagClick('intent','${esc(d.intent)}')">${esc(d.intent)}</span>
-        </div>
-      </div>`;
-    c.addEventListener('click',()=>openModal(d));
-    grid.appendChild(c);
-  });
-}
+  loadFromAirtable();
+});
 
 // ── TITLE ANIMATION ──
 function initTitleAnim(){
