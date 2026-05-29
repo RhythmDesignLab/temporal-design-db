@@ -517,8 +517,7 @@ async function loadFromAirtable() {
   populateSelects();
   applyAll();
   chartsBuilt=false; // force charts to rebuild with new data next time viz tab is opened
-  document.getElementById('domainCount').textContent = new Set(DATA.map(d=>d.domain)).size;
-  document.getElementById('totalCount').textContent  = DATA.length;
+  const tc=document.getElementById('totalCount'); if(tc) tc.textContent=DATA.length;
 }
 
 
