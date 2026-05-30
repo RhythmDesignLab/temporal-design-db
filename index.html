@@ -713,12 +713,7 @@ function openModal(d){
   document.getElementById('mLinks').innerHTML=links;
   document.getElementById('mRadial').innerHTML=buildRadialSVG(d);
   // wire up clickable terminal dots → close modal + apply filter
-  document.querySelectorAll('#mRadial .terminal-dot').forEach(el=>{
-    el.addEventListener('click',()=>{
-      const field=el.dataset.field, val=el.dataset.val;
-      if(field&&val){ closeModalDirect(); tagClick(field,val); }
-    });
-  });
+  // dot clicks handled via inline onclick → dotClick()
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow='hidden';
   startSpokeRotation(500,500,d);
@@ -753,12 +748,19 @@ function startSpokeRotation(cx,cy,d){
       else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
       const fl=document.getElementById('lf'+i);
       const vl=document.getElementById('lv'+i);
-      if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-14).toFixed(1));fl.setAttribute('text-anchor',anchor);}
-      if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+6).toFixed(1));vl.setAttribute('text-anchor',anchor);}
+      const cl=document.getElementById('lc'+i);
+      if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-18).toFixed(1));fl.setAttribute('text-anchor',anchor);}
+      if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+8).toFixed(1));vl.setAttribute('text-anchor',anchor);}
+      if(cl){cl.setAttribute('x',tx.toFixed(1));cl.setAttribute('y',ty.toFixed(1));}
     });
     _rotTimer=setTimeout(tick,Math.floor(Math.random()*2800+700));
   }
   _rotTimer=setTimeout(tick,Math.floor(Math.random()*1200+400));
+}
+
+function dotClick(field,val){
+  closeModalDirect();
+  tagClick(field,val);
 }
 
 function buildRadialSVG(d){
@@ -785,9 +787,10 @@ function buildRadialSVG(d){
     spokes.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>`);
     const col=val?'rgba(180,180,255,1)':'rgba(255,255,255,0.2)';
     const fillCol=val?'rgba(100,100,255,0.18)':'rgba(255,255,255,0.05)';
-    const da=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer;pointer-events:auto"`:'';
+    const safeVal=val?val.replace(/'/g,"\\'"):'';
+    const da=val?`style="cursor:pointer;pointer-events:auto" onclick="dotClick('${f.key}','${safeVal}')"`:'';
     spokes.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.8" ${da}/>`);
-    if(tR>=14&&val) spokes.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="18" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
+    if(tR>=14&&val) labels.push(`<text id="lc${i}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
 
     // labels: positioned outside terminal, in a separate NON-rotating group
     const pad=tR+16;
@@ -796,8 +799,8 @@ function buildRadialSVG(d){
     else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
     else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
     const dv=val?(val.length>22?val.slice(0,20)+'\u2026':val):'\u2014';
-    labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-14).toFixed(1)}" text-anchor="${anchor}" font-size="16" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.55)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
-    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="22" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.92)">${dv}</text>`);
+    labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-14).toFixed(1)}" text-anchor="${anchor}" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.6)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
+    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="38" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dv}</text>`);
   });
 
   if(d.image){fixed.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);}
