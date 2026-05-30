@@ -106,10 +106,10 @@ select:focus{border-color:var(--accent)}
 .modal-overlay.open .modal-new{transform:translateY(0)}
 .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;font-size:18px;color:#fff;width:32px;height:32px;display:flex;align-items:center;justify-content:center;z-index:10;border-radius:50%;transition:color .15s,background .15s}
 .modal-close:hover{background:rgba(255,255,255,.15)}
-.modal-layout{display:grid;grid-template-columns:2fr 3fr;min-height:520px}
+.modal-layout{display:grid;grid-template-columns:1fr 2fr;min-height:520px}
 .modal-left{padding:36px 28px 28px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;border-right:1px solid var(--border)}
 .modal-right{background:#1a1714;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.modal-right svg{width:100%;height:100%;display:block}
+.modal-right svg{width:100%;height:100%;display:block;cursor:default}
 .modal-id{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
 .modal-title{font-family:'Libre Baskerville',serif;font-size:clamp(17px,2.5vw,24px);font-weight:400;line-height:1.2;color:var(--text)}
 .modal-author{font-size:14px;color:var(--muted)}
@@ -120,7 +120,6 @@ select:focus{border-color:var(--accent)}
 @media(max-width:640px){
   .modal-layout{grid-template-columns:1fr;min-height:auto}
   .modal-right{min-height:280px}
-  .modal-right svg text{display:none}
 }
 
 /* CARDS */
@@ -713,7 +712,9 @@ function openModal(d){
   document.getElementById('mLinks').innerHTML=links;
   document.getElementById('mRadial').innerHTML=buildRadialSVG(d);
   // wire up clickable terminal dots → close modal + apply filter
-  // dot clicks handled via inline onclick → dotClick()
+  // SVG-level geometry hit test for dot clicks
+  const svgEl=document.querySelector('#mRadial svg');
+  if(svgEl) svgEl.addEventListener('click',_svgClick);
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow='hidden';
   startSpokeRotation(500,500,d);
@@ -755,6 +756,37 @@ function startSpokeRotation(cx,cy,d){
 }
 
 
+// ── SVG CLICK HANDLER — geometry-based hit test ──
+function _svgClick(event){
+  if(!_rotD) return;
+  const svgEl=event.currentTarget;
+  const rect=svgEl.getBoundingClientRect();
+  const vw=1260,vh=1260,vx=-130,vy=-130;
+  const scale=Math.min(rect.width/vw, rect.height/vh);
+  const offX=(rect.width-vw*scale)/2;
+  const offY=(rect.height-vh*scale)/2;
+  // click in SVG coords
+  const cx2=(event.clientX-rect.left-offX)/scale+vx;
+  const cy2=(event.clientY-rect.top-offY)/scale+vy;
+  const cxC=500,cyC=500;
+  let hit=null;
+  RADIAL_FIELDS.forEach((f,i)=>{
+    const a=(-135+i*45+_rotAngle)*Math.PI/180;
+    const cosA=Math.cos(a),sinA=Math.sin(a);
+    const val=_rotD[f.key]||'';
+    if(!val) return;
+    const counts=fieldCounts[f.key]||{};
+    const count=counts[val]||0;
+    const maxC=Object.values(counts).length?Math.max(...Object.values(counts)):1;
+    const tR=Math.max(12,Math.round(12+(count/maxC)*20));
+    const tx=cxC+(RADIAL_IMGR+RADIAL_LINELEN+tR)*cosA;
+    const ty=cyC+(RADIAL_IMGR+RADIAL_LINELEN+tR)*sinA;
+    const dist=Math.sqrt((cx2-tx)**2+(cy2-ty)**2);
+    if(dist<=tR+10) hit={field:f.key,val}; // +10 tolerance
+  });
+  if(hit) dotClick(hit.field,hit.val);
+}
+
 // ── LABEL UPDATER (requestAnimationFrame) ──
 function _updateLabels(){
   const sg=document.getElementById('spokeGroup');
@@ -778,8 +810,8 @@ function _updateLabels(){
     const fl=document.getElementById('lf'+i);
     const vl=document.getElementById('lv'+i);
     const cl=document.getElementById('lc'+i);
-    if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-16).toFixed(1));fl.setAttribute('text-anchor',anchor);}
-    if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+6).toFixed(1));vl.setAttribute('text-anchor',anchor);}
+    if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-20).toFixed(1));fl.setAttribute('text-anchor',anchor);}
+    if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+12).toFixed(1));vl.setAttribute('text-anchor',anchor);}
     if(cl){cl.setAttribute('x',tx.toFixed(1));cl.setAttribute('y',ty.toFixed(1));}
   });
   requestAnimationFrame(_updateLabels);
@@ -814,8 +846,8 @@ function buildRadialSVG(d){
     spokes.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>`);
     const col=val?'rgba(180,180,255,1)':'rgba(255,255,255,0.2)';
     const fillCol=val?'rgba(100,100,255,0.18)':'rgba(255,255,255,0.05)';
-    const safeVal=val?val.replace(/'/g,"\\'"):'';
-    const da=val?`style="cursor:pointer;pointer-events:auto" onclick="dotClick('${f.key}','${safeVal}')"`:'';
+    // dot identified by index for click handler
+    const da=val?`id="dot${i}" style="cursor:pointer" class="rdot"`:'data-empty="1"';
     spokes.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.8" ${da}/>`);
     if(tR>=14&&val) labels.push(`<text id="lc${i}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="26" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
 
@@ -826,8 +858,8 @@ function buildRadialSVG(d){
     else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
     else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
     const dv=val?(val.length>16?val.slice(0,14)+'\u2026':val):'\u2014';
-    labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-14).toFixed(1)}" text-anchor="${anchor}" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.6)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
-    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="32" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dv}</text>`);
+    labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-20).toFixed(1)}" text-anchor="${anchor}" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.6)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
+    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+12).toFixed(1)}" text-anchor="${anchor}" font-size="32" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dv}</text>`);
   });
 
   if(d.image){fixed.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);}
