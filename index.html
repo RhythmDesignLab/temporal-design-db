@@ -106,7 +106,7 @@ select:focus{border-color:var(--accent)}
 .modal-overlay.open .modal-new{transform:translateY(0)}
 .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;font-size:18px;color:#fff;width:32px;height:32px;display:flex;align-items:center;justify-content:center;z-index:10;border-radius:50%;transition:color .15s,background .15s}
 .modal-close:hover{background:rgba(255,255,255,.15)}
-.modal-layout{display:grid;grid-template-columns:5fr 7fr;min-height:500px}
+.modal-layout{display:grid;grid-template-columns:2fr 3fr;min-height:520px}
 .modal-left{padding:36px 28px 28px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;border-right:1px solid var(--border)}
 .modal-right{background:#1a1714;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .modal-right svg{width:100%;height:100%;display:block}
@@ -746,16 +746,43 @@ function startSpokeRotation(cx,cy,d){
       if(Math.abs(cosA)>=0.42){lbX=cosA>0?tx+pad:tx-pad;lbY=ty;anchor=cosA>0?'start':'end';}
       else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
       else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
-      const fl=document.getElementById('lf'+i);
-      const vl=document.getElementById('lv'+i);
-      const cl=document.getElementById('lc'+i);
-      if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-18).toFixed(1));fl.setAttribute('text-anchor',anchor);}
-      if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+8).toFixed(1));vl.setAttribute('text-anchor',anchor);}
-      if(cl){cl.setAttribute('x',tx.toFixed(1));cl.setAttribute('y',ty.toFixed(1));}
+      // labels updated by rAF loop
     });
     _rotTimer=setTimeout(tick,Math.floor(Math.random()*2800+700));
   }
   _rotTimer=setTimeout(tick,Math.floor(Math.random()*1200+400));
+  requestAnimationFrame(_updateLabels);
+}
+
+
+// ── LABEL UPDATER (requestAnimationFrame) ──
+function _updateLabels(){
+  const sg=document.getElementById('spokeGroup');
+  if(!sg||!_rotD){return;} // modal closed, stop
+  const cx=500,cy=500;
+  RADIAL_FIELDS.forEach((f,i)=>{
+    const a=(-135+i*45+_rotAngle)*Math.PI/180;
+    const cosA=Math.cos(a),sinA=Math.sin(a);
+    const val=_rotD[f.key]||'';
+    const counts=fieldCounts[f.key]||{};
+    const count=val?(counts[val]||0):0;
+    const maxC=Object.values(counts).length?Math.max(...Object.values(counts)):1;
+    const tR=val?Math.max(12,Math.round(12+(count/maxC)*20)):12;
+    const tx=cx+(RADIAL_IMGR+RADIAL_LINELEN+tR)*cosA;
+    const ty=cy+(RADIAL_IMGR+RADIAL_LINELEN+tR)*sinA;
+    const pad=tR+16;
+    let lbX,lbY,anchor;
+    if(Math.abs(cosA)>=0.42){lbX=cosA>0?tx+pad:tx-pad;lbY=ty;anchor=cosA>0?'start':'end';}
+    else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
+    else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
+    const fl=document.getElementById('lf'+i);
+    const vl=document.getElementById('lv'+i);
+    const cl=document.getElementById('lc'+i);
+    if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-16).toFixed(1));fl.setAttribute('text-anchor',anchor);}
+    if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+6).toFixed(1));vl.setAttribute('text-anchor',anchor);}
+    if(cl){cl.setAttribute('x',tx.toFixed(1));cl.setAttribute('y',ty.toFixed(1));}
+  });
+  requestAnimationFrame(_updateLabels);
 }
 
 function dotClick(field,val){
@@ -790,7 +817,7 @@ function buildRadialSVG(d){
     const safeVal=val?val.replace(/'/g,"\\'"):'';
     const da=val?`style="cursor:pointer;pointer-events:auto" onclick="dotClick('${f.key}','${safeVal}')"`:'';
     spokes.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.8" ${da}/>`);
-    if(tR>=14&&val) labels.push(`<text id="lc${i}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
+    if(tR>=14&&val) labels.push(`<text id="lc${i}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="26" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
 
     // labels: positioned outside terminal, in a separate NON-rotating group
     const pad=tR+16;
@@ -798,9 +825,9 @@ function buildRadialSVG(d){
     if(Math.abs(cosA)>=0.42){lbX=cosA>0?tx+pad:tx-pad;lbY=ty;anchor=cosA>0?'start':'end';}
     else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
     else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
-    const dv=val?(val.length>22?val.slice(0,20)+'\u2026':val):'\u2014';
+    const dv=val?(val.length>16?val.slice(0,14)+'\u2026':val):'\u2014';
     labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-14).toFixed(1)}" text-anchor="${anchor}" font-size="30" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.6)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
-    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="38" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dv}</text>`);
+    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="32" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dv}</text>`);
   });
 
   if(d.image){fixed.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);}
@@ -811,13 +838,14 @@ function buildRadialSVG(d){
   }
   fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>`);
 
-  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid meet" style="display:block">${fixed.join('')}<g id="spokeGroup">${spokes.join('')}</g><g id="labelGroup">${labels.join('')}</g></svg>`;
+  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid meet" style="display:block">${fixed.join('')}<g id="spokeGroup">${spokes.join('')}</g><g id="labelGroup" style="pointer-events:none">${labels.join('')}</g></svg>`;
 }
 
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
 function closeModalDirect(){
   if(_rotTimer){clearTimeout(_rotTimer);_rotTimer=null;}
   _rotAngle=0;
+  _rotD=null;
   document.getElementById('modalOverlay').classList.remove('open');
   document.body.style.overflow='';
 }
