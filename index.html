@@ -100,22 +100,28 @@ select:focus{border-color:var(--accent)}
 .tag.c-interact{background:#f4f8f0;border-color:#c8d8b8;color:#3a5830}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.65);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:32px 20px;opacity:0;pointer-events:none;transition:opacity .28s}
+.modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.7);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .28s;overflow-y:auto}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal-wrapper{display:flex;flex-direction:column;align-items:center;gap:22px;position:relative;padding-top:8px;width:100%}
-.modal-close{position:fixed;top:18px;right:22px;background:rgba(255,255,255,.92);border:1px solid var(--border);cursor:pointer;font-size:15px;color:var(--muted);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:600;border-radius:50%;transition:color .15s,background .15s;line-height:1}
-.modal-close:hover{color:var(--text);background:#fff}
-.modal-above{text-align:center;color:#fff}
-.modal-id{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px}
-.modal-title{font-family:'Libre Baskerville',serif;font-size:clamp(18px,3vw,26px);font-weight:400;color:#fff;margin-bottom:4px;line-height:1.2}
-.modal-author{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px}
-.modal-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.modal-link{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:2px;transition:background .15s,border-color .15s;text-transform:uppercase}
-.modal-link:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.6)}
-.modal-circle{width:min(660px,92vw);height:min(660px,92vw);border-radius:50%;border:none;position:relative;overflow:visible;background:transparent;flex-shrink:0}
-.modal-circle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:140%;height:140%;pointer-events:none}
-.modal-desc-wrap{max-width:460px;width:100%}
-.modal-desc{font-size:16px;font-weight:300;line-height:1.8;color:rgba(255,255,255,.85);padding:14px 18px;border:1px solid rgba(255,255,255,.2);border-left:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.08)}
+.modal-new{background:var(--white);border-radius:3px;width:100%;max-width:920px;max-height:90vh;overflow:hidden;position:relative;transform:translateY(14px);transition:transform .28s;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.modal-overlay.open .modal-new{transform:translateY(0)}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;font-size:18px;color:#fff;width:32px;height:32px;display:flex;align-items:center;justify-content:center;z-index:10;border-radius:50%;transition:color .15s,background .15s}
+.modal-close:hover{background:rgba(255,255,255,.15)}
+.modal-layout{display:grid;grid-template-columns:5fr 7fr;min-height:500px}
+.modal-left{padding:36px 28px 28px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;border-right:1px solid var(--border)}
+.modal-right{background:#1a1714;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.modal-right svg{width:100%;height:100%;display:block}
+.modal-id{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:clamp(17px,2.5vw,24px);font-weight:400;line-height:1.2;color:var(--text)}
+.modal-author{font-size:14px;color:var(--muted)}
+.modal-desc{font-size:14px;font-weight:300;line-height:1.75;color:var(--text);padding:14px 16px;background:var(--surface);border-left:2px solid var(--accent);flex:1}
+.modal-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.modal-link{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid #b3b3ff;padding:5px 12px;border-radius:2px;transition:background .15s,color .15s}
+.modal-link:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media(max-width:640px){
+  .modal-layout{grid-template-columns:1fr;min-height:auto}
+  .modal-right{min-height:280px}
+  .modal-right svg text{display:none}
+}
 
 /* CARDS */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
@@ -358,19 +364,17 @@ footer p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal-wrapper" onclick="event.stopPropagation()">
+  <div class="modal-new" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModalDirect()" aria-label="Close">✕</button>
-    <div class="modal-above">
-      <div class="modal-id" id="mId"></div>
-      <div class="modal-title" id="mTitle"></div>
-      <div class="modal-author" id="mAuthor"></div>
-      <div class="modal-links" id="mLinks"></div>
-    </div>
-    <div class="modal-circle">
-      <div id="mRadial"></div>
-    </div>
-    <div class="modal-desc-wrap">
-      <div class="modal-desc" id="mDesc"></div>
+    <div class="modal-layout">
+      <div class="modal-left">
+        <div class="modal-id" id="mId"></div>
+        <div class="modal-title" id="mTitle"></div>
+        <div class="modal-author" id="mAuthor"></div>
+        <div class="modal-desc" id="mDesc"></div>
+        <div class="modal-links" id="mLinks"></div>
+      </div>
+      <div class="modal-right" id="mRadial"></div>
     </div>
   </div>
 </div>
@@ -461,6 +465,7 @@ async function loadFromAirtable() {
     } while(offset);
   } catch(err) {
     console.error('Airtable error:', err.message);
+    return;
   }
 
   DATA = records.map(r => {
@@ -521,6 +526,15 @@ async function loadFromAirtable() {
 }
 
 
+
+// ── RADIAL FIELDS (shared between SVG builder and rotation) ──
+const RADIAL_FIELDS=[
+  {key:'domain',label:'Domain'},{key:'temporalFocus',label:'Temporal Focus'},
+  {key:'operation',label:'Operation'},{key:'orientation',label:'Orientation'},
+  {key:'intent',label:'Design Intent'},{key:'tech',label:'Technology'},
+  {key:'sense',label:'Sensory Modality'},{key:'interaction',label:'Interaction'},
+];
+const RADIAL_IMGR=330, RADIAL_LINELEN=58;
 
 // ── STATE ──
 let sortCol=-1, sortDir=1, filteredData=[...DATA], chartsBuilt=false;
@@ -707,88 +721,94 @@ function openModal(d){
   });
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow='hidden';
-  startSpokeRotation(500, 500);
+  startSpokeRotation(500,500,d);
+}
+
+// ── SPOKE ROTATION ──
+let _rotAngle=0, _rotTimer=null, _rotD=null;
+function startSpokeRotation(cx,cy,d){
+  _rotD=d; _rotAngle=0;
+  if(_rotTimer){clearTimeout(_rotTimer);_rotTimer=null;}
+  function tick(){
+    _rotAngle+=1;
+    const sg=document.getElementById('spokeGroup');
+    if(!sg)return;
+    // rotate lines+circles
+    sg.setAttribute('transform',`rotate(${_rotAngle},${cx},${cy})`);
+    // update label positions to follow their spokes — text stays horizontal
+    RADIAL_FIELDS.forEach((f,i)=>{
+      const a=(-135+i*45+_rotAngle)*Math.PI/180;
+      const cosA=Math.cos(a),sinA=Math.sin(a);
+      const val=_rotD?(_rotD[f.key]||''):'';
+      const counts=fieldCounts[f.key]||{};
+      const count=val?(counts[val]||0):0;
+      const maxC=Object.values(counts).length?Math.max(...Object.values(counts)):1;
+      const tR=val?Math.max(12,Math.round(12+(count/maxC)*20)):12;
+      const tx=cx+(RADIAL_IMGR+RADIAL_LINELEN+tR)*cosA;
+      const ty=cy+(RADIAL_IMGR+RADIAL_LINELEN+tR)*sinA;
+      const pad=tR+16;
+      let lbX,lbY,anchor;
+      if(Math.abs(cosA)>=0.42){lbX=cosA>0?tx+pad:tx-pad;lbY=ty;anchor=cosA>0?'start':'end';}
+      else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
+      else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
+      const fl=document.getElementById('lf'+i);
+      const vl=document.getElementById('lv'+i);
+      if(fl){fl.setAttribute('x',lbX.toFixed(1));fl.setAttribute('y',(lbY-14).toFixed(1));fl.setAttribute('text-anchor',anchor);}
+      if(vl){vl.setAttribute('x',lbX.toFixed(1));vl.setAttribute('y',(lbY+6).toFixed(1));vl.setAttribute('text-anchor',anchor);}
+    });
+    _rotTimer=setTimeout(tick,Math.floor(Math.random()*2800+700));
+  }
+  _rotTimer=setTimeout(tick,Math.floor(Math.random()*1200+400));
 }
 
 function buildRadialSVG(d){
-  const W=1000, H=1000;
-  const cx=500, cy=500;
-  const imgR=330;
-  const lineLen=58;
-
-  const fields=[
-    {key:'domain',        label:'Domain'},
-    {key:'temporalFocus', label:'Temporal Focus'},
-    {key:'operation',     label:'Operation'},
-    {key:'orientation',   label:'Orientation'},
-    {key:'intent',        label:'Design Intent'},
-    {key:'tech',          label:'Technology'},
-    {key:'sense',         label:'Sensory Modality'},
-    {key:'interaction',   label:'Interaction'},
-  ];
-
-  const fixed=[];  // image + border (do not rotate)
-  const spokes=[]; // lines + dots + labels (rotate)
-
+  const cx=500,cy=500,imgR=RADIAL_IMGR,lineLen=RADIAL_LINELEN;
+  const vx=-130,vy=-130,vw=1260,vh=1260;
+  const fixed=[],spokes=[],labels=[];
   fixed.push(`<defs><clipPath id="imgClip"><circle cx="${cx}" cy="${cy}" r="${imgR}"/></clipPath></defs>`);
 
-  fields.forEach((f,i)=>{
+  RADIAL_FIELDS.forEach((f,i)=>{
     const angleDeg=-135+i*45;
     const a=angleDeg*Math.PI/180;
-    const cosA=Math.cos(a), sinA=Math.sin(a);
+    const cosA=Math.cos(a),sinA=Math.sin(a);
     const val=d[f.key]||'';
     const counts=fieldCounts[f.key]||{};
     const count=val?(counts[val]||0):0;
     const maxCount=Object.values(counts).length?Math.max(...Object.values(counts)):1;
-    const tR=val?Math.max(9,Math.round(9+(count/maxCount)*17)):9;
+    const tR=val?Math.max(12,Math.round(12+(count/maxCount)*20)):12;
 
-    const lx1=(cx+(imgR+4)*cosA).toFixed(1);
-    const ly1=(cy+(imgR+4)*sinA).toFixed(1);
-    const tx= cx+(imgR+lineLen+tR)*cosA;
-    const ty= cy+(imgR+lineLen+tR)*sinA;
-    const lx2=(tx-(tR+2)*cosA).toFixed(1);
-    const ly2=(ty-(tR+2)*sinA).toFixed(1);
+    const lx1=(cx+(imgR+4)*cosA).toFixed(1),ly1=(cy+(imgR+4)*sinA).toFixed(1);
+    const tx=cx+(imgR+lineLen+tR)*cosA,ty=cy+(imgR+lineLen+tR)*sinA;
+    const lx2=(tx-(tR+2)*cosA).toFixed(1),ly2=(ty-(tR+2)*sinA).toFixed(1);
 
-    spokes.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.5)" stroke-width="1.8"/>`);
-
+    // spokes: lines + circles (will rotate)
+    spokes.push(`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>`);
     const col=val?'rgba(180,180,255,1)':'rgba(255,255,255,0.2)';
-    const fillCol=val?'rgba(100,100,255,0.2)':'rgba(255,255,255,0.05)';
-    const dataAttrs=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer;pointer-events:auto"`:'';
-    spokes.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.5" ${dataAttrs}/>`);
+    const fillCol=val?'rgba(100,100,255,0.18)':'rgba(255,255,255,0.05)';
+    const da=val?`class="terminal-dot" data-field="${f.key}" data-val="${val.replace(/"/g,'&quot;')}" style="cursor:pointer;pointer-events:auto"`:'';
+    spokes.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="${tR}" fill="${fillCol}" stroke="${col}" stroke-width="1.8" ${da}/>`);
+    if(tR>=14&&val) spokes.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="18" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
 
-    if(tR>=12&&val){
-      spokes.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="22" font-family="IBM Plex Mono,monospace" fill="rgba(220,220,255,1)" style="pointer-events:none">${count}</text>`);
-    }
-
-    const pad=tR+40;
-    let lbX, lbY, anchor;
-    if(Math.abs(cosA)>=0.42){
-      lbX=cosA>0?tx+pad:tx-pad; lbY=ty; anchor=cosA>0?'start':'end';
-    } else if(sinA<0){
-      lbX=tx; lbY=ty-pad; anchor='middle';
-    } else {
-      lbX=tx; lbY=ty+pad; anchor='middle';
-    }
-
-    const dispVal=val?(val.length>22?val.slice(0,20)+'\u2026':val):'\u2014';
-    spokes.push(`<text x="${lbX.toFixed(1)}" y="${(lbY-13).toFixed(1)}" text-anchor="${anchor}" font-size="20" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.65)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
-    spokes.push(`<text x="${lbX.toFixed(1)}" y="${(lbY+8).toFixed(1)}"  text-anchor="${anchor}" font-size="28" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.95)">${dispVal}</text>`);
+    // labels: positioned outside terminal, in a separate NON-rotating group
+    const pad=tR+16;
+    let lbX,lbY,anchor;
+    if(Math.abs(cosA)>=0.42){lbX=cosA>0?tx+pad:tx-pad;lbY=ty;anchor=cosA>0?'start':'end';}
+    else if(sinA<0){lbX=tx;lbY=ty-pad-8;anchor='middle';}
+    else{lbX=tx;lbY=ty+pad+8;anchor='middle';}
+    const dv=val?(val.length>22?val.slice(0,20)+'\u2026':val):'\u2014';
+    labels.push(`<text id="lf${i}" x="${lbX.toFixed(1)}" y="${(lbY-14).toFixed(1)}" text-anchor="${anchor}" font-size="16" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.55)" letter-spacing="0.05em">${f.label.toUpperCase()}</text>`);
+    labels.push(`<text id="lv${i}" x="${lbX.toFixed(1)}" y="${(lbY+6).toFixed(1)}" text-anchor="${anchor}" font-size="22" font-family="IBM Plex Mono,monospace" fill="rgba(255,255,255,0.92)">${dv}</text>`);
   });
 
-  // Fixed: image or placeholder
-  if(d.image){
-    fixed.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);
-  } else {
-    fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="rgba(255,255,255,0.08)"/>`);
-    fixed.push(`<line x1="${cx-60}" y1="${cy-60}" x2="${cx+60}" y2="${cy+60}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>`);
-    fixed.push(`<line x1="${cx+60}" y1="${cy-60}" x2="${cx-60}" y2="${cy+60}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>`);
+  if(d.image){fixed.push(`<image href="${d.image}" x="${cx-imgR}" y="${cy-imgR}" width="${imgR*2}" height="${imgR*2}" clip-path="url(#imgClip)" preserveAspectRatio="xMidYMid slice"/>`);}
+  else{
+    fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="rgba(255,255,255,0.06)"/>`);
+    fixed.push(`<line x1="${cx-70}" y1="${cy-70}" x2="${cx+70}" y2="${cy+70}" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>`);
+    fixed.push(`<line x1="${cx+70}" y1="${cy-70}" x2="${cx-70}" y2="${cy+70}" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>`);
   }
-  // Fixed: center ring
-  fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>`);
+  fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>`);
 
-  const spokeGroup=`<g id="spokeGroup" style="transition:transform 200ms ease-out">${spokes.join('')}</g>`;
-
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;margin:0 auto;max-width:100%;pointer-events:none">${fixed.join('')}${spokeGroup}</svg>`;
+  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid meet" style="display:block;pointer-events:none">${fixed.join('')}<g id="spokeGroup">${spokes.join('')}</g><g id="labelGroup">${labels.join('')}</g></svg>`;
 }
 
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
