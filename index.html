@@ -808,7 +808,7 @@ function buildRadialSVG(d){
   }
   fixed.push(`<circle cx="${cx}" cy="${cy}" r="${imgR}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>`);
 
-  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid meet" style="display:block;pointer-events:none">${fixed.join('')}<g id="spokeGroup">${spokes.join('')}</g><g id="labelGroup">${labels.join('')}</g></svg>`;
+  return `<svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid meet" style="display:block">${fixed.join('')}<g id="spokeGroup">${spokes.join('')}</g><g id="labelGroup">${labels.join('')}</g></svg>`;
 }
 
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
