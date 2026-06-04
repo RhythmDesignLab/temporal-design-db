@@ -582,6 +582,16 @@ function populateSelects(){
 
 // ── FILTER SYNC ──
 function syncFromSelect(field,selId){AF[field]=document.getElementById(selId).value;}
+function tagClick(field,val){
+  // toggle: if same value deselect, else select
+  AF[field]=AF[field]===val?'':val;
+  // sync the dropdown
+  const selId=SELECT_MAP[field];
+  if(selId){const sel=document.getElementById(selId);if(sel)sel.value=AF[field];}
+  applyAll();
+  // scroll to top of cards so filter result is visible
+  window.scrollTo({top:document.getElementById('inner-cards').offsetTop-80,behavior:'smooth'});
+}
 function removeFilter(field){
   AF[field]='';
   const selId=SELECT_MAP[field];
